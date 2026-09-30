@@ -211,7 +211,7 @@ public sealed class TagDatabase : ITagDatabase
             0xCA => 4,  // REAL
             0xCB => 8,  // LREAL — 8-byte aligned
             0xD3 => 4,  // DWORD
-            0xD4 => 81, // SHORT_STRING
+            0xD4 => LogixDataTypes.ShortStringStorageSize, // SHORT_STRING
             _ => Math.Min(elementSize, 4), // Unknown: align to element size, max 4
         };
     }
