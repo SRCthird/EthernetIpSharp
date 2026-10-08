@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Buffers.Binary;
 
 namespace EthernetIPSharp.Cip;
 
@@ -22,6 +23,86 @@ public static class CipStandardServices
     public const byte GetAttributeSingle = 0x0E;
     /// <summary>Service code: Set Attribute Single (0x10).</summary>
     public const byte SetAttributeSingle = 0x10;
+
+    /// <summary>
+    /// Handle Get_Attribute_List (0x03).
+    /// Request:  attribute count (UINT) + attribute IDs (UINT each).
+    /// Response: attribute count (UINT) then, per attribute,
+    ///           attribute ID (UINT) + general status (USINT) + data.
+    /// Attributes are returned in ascending ID order, matching Logix hardware,
+    /// and are reported individually so a single bad ID does not fail the request.
+    /// </summary>
+    public static CipServiceResponse HandleGetAttributeList(
+        CipInstance instance, CipServiceRequest request)
+    {
+        var span = request.Data.Span;
+        if (span.Length < 2)
+            return CipServiceResponse.Error(
+                request.ServiceCode, CipStatus.Error(CipStatus.NotEnoughData));
+
+        int count = BinaryPrimitives.ReadUInt16LittleEndian(span);
+        if (span.Length < 2 + count * 2)
+            return CipServiceResponse.Error(
+                request.ServiceCode, CipStatus.Error(CipStatus.NotEnoughData));
+
+        var ids = new ushort[count];
+        for (int i = 0; i < count; i++)
+            ids[i] = BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(2 + i * 2));
+
+        int capacity = 2;
+
+        foreach (var id in ids)
+        {
+            var attr = instance.GetAttribute(id);
+            capacity += 4;
+
+            if (attr != null &&
+                (attr.Access & AttributeAccess.GetSingle) != 0)
+            {
+                capacity += attr.DataLength;
+            }
+        }
+
+        var buffer = ArrayPool<byte>.Shared.Rent(capacity);
+        try
+        {
+            int offset = 0;
+            BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset), (ushort)count);
+            offset += 2;
+
+            foreach (var id in ids)
+            {
+                BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset), id);
+                offset += 2;
+
+                var attr = instance.GetAttribute(id);
+                bool readable = attr != null
+                    && (attr.Access & AttributeAccess.GetSingle) != 0;
+
+                // General status (USINT) + extended status size (USINT), per CIP Vol 1.
+                // Zero extended words, so this is a single little-endian UINT.
+                if (!readable)
+                {
+                    BinaryPrimitives.WriteUInt16LittleEndian(
+                        buffer.AsSpan(offset), CipStatus.AttributeNotSupported);
+                    offset += 2;
+                    continue;
+                }
+
+                BinaryPrimitives.WriteUInt16LittleEndian(
+                    buffer.AsSpan(offset), CipStatus.SuccessStatus);
+                offset += 2;
+                offset += attr!.EncodeTo(buffer.AsSpan(offset));
+            }
+
+            return CipServiceResponse.Success(
+                request.ServiceCode, buffer.AsSpan(0, offset).ToArray());
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
 
     /// <summary>
     /// Handle GetAttributeSingle (0x0E) — read one attribute by ID from the path.

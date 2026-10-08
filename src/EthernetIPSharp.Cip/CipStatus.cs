@@ -24,6 +24,8 @@ public readonly struct CipStatus
 
     // --- Common CIP general status codes ---
 
+    ///  <summary>0x00 — service completed successfully.</summary>
+    public const byte SuccessStatus = 0x00;
     /// <summary>0x04 — syntax error in request path.</summary>
     public const byte PathSegmentError = 0x04;
     /// <summary>0x05 — request path destination unknown.</summary>
