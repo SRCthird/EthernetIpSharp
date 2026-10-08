@@ -54,6 +54,7 @@ public class CipClass
         // Register standard class-level services
         AddClassService(new CipServiceDefinition(CipStandardServices.GetAttributeSingle, "Get_Attribute_Single", CipStandardServices.HandleGetAttributeSingle));
         AddClassService(new CipServiceDefinition(CipStandardServices.GetAttributeAll, "Get_Attributes_All", CipStandardServices.HandleGetAttributeAll));
+        AddClassService(new CipServiceDefinition(CipStandardServices.GetAttributeList, "Get_Attribute_List", CipStandardServices.HandleGetAttributeList));
     }
 
     /// <summary>
@@ -134,13 +135,31 @@ public class CipClass
         isClassLevel ? GetClassService(serviceCode) : GetInstanceService(serviceCode);
 
     /// <summary>
+    /// Register a service on instances of this class, leaving any existing
+    /// registration for that service code untouched.
+    /// Object-specific handlers therefore always win over the standard set.
+    /// </summary>
+    private void TryAddInstanceService(CipServiceDefinition service)
+        => _instanceServices.TryAdd(service.ServiceCode, service);
+
+    /// <summary>
     /// Convenience method to register the standard CIP instance services:
-    /// GetAttributeSingle (0x0E), SetAttributeSingle (0x10), GetAttributeAll (0x01).
+    /// GetAttributeSingle (0x0E), SetAttributeSingle (0x10), GetAttributeAll (0x01),
+    /// and GetAttributeList (0x03).
     /// </summary>
     public void AddStandardInstanceServices()
     {
-        AddInstanceService(new CipServiceDefinition(CipStandardServices.GetAttributeSingle, "Get_Attribute_Single", CipStandardServices.HandleGetAttributeSingle));
-        AddInstanceService(new CipServiceDefinition(CipStandardServices.SetAttributeSingle, "Set_Attribute_Single", CipStandardServices.HandleSetAttributeSingle));
-        AddInstanceService(new CipServiceDefinition(CipStandardServices.GetAttributeAll, "Get_Attributes_All", CipStandardServices.HandleGetAttributeAll));
+        TryAddInstanceService(new CipServiceDefinition(
+            CipStandardServices.GetAttributeSingle, "Get_Attribute_Single", CipStandardServices.HandleGetAttributeSingle)
+        );
+        TryAddInstanceService(
+            new CipServiceDefinition(CipStandardServices.SetAttributeSingle, "Set_Attribute_Single", CipStandardServices.HandleSetAttributeSingle)
+        );
+        TryAddInstanceService(
+            new CipServiceDefinition(CipStandardServices.GetAttributeAll, "Get_Attributes_All", CipStandardServices.HandleGetAttributeAll)
+        );
+        TryAddInstanceService(
+            new CipServiceDefinition(CipStandardServices.GetAttributeList, "Get_Attribute_List", CipStandardServices.HandleGetAttributeList)
+        );
     }
 }
