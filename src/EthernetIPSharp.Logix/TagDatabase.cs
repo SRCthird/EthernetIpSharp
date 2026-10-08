@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using System.Threading;
+
 
 namespace EthernetIPSharp.Logix;
 
@@ -21,6 +23,12 @@ public sealed class TagDatabase : ITagDatabase
     /// <summary>Fires when a new template is added.</summary>
     public event Action<TemplateDefinition>? TemplateAdded;
 
+    private uint _structureVersion;
+
+    /// <inheritdoc />
+    public uint StructureVersion => Volatile.Read(ref _structureVersion);
+
+
     /// <summary>Add an atomic tag.</summary>
     public Tag AddTag(string name, ushort tagType, int elementCount = 1)
     {
@@ -40,6 +48,7 @@ public sealed class TagDatabase : ITagDatabase
             elementCount: elementCount);
 
         RegisterTag(tag);
+        Interlocked.Increment(ref _structureVersion);
         return tag;
     }
 
@@ -58,6 +67,7 @@ public sealed class TagDatabase : ITagDatabase
             elementCount: elementCount);
 
         RegisterTag(tag);
+        Interlocked.Increment(ref _structureVersion);
         return tag;
     }
 
@@ -184,6 +194,7 @@ public sealed class TagDatabase : ITagDatabase
             members: resolvedMembers.ToArray());
 
         _templates[instanceId] = template;
+        Interlocked.Increment(ref _structureVersion);
         TemplateAdded?.Invoke(template);
         return template;
     }

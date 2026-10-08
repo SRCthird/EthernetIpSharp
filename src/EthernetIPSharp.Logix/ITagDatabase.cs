@@ -41,4 +41,11 @@ public interface ITagDatabase
 
     /// <summary>Fires when a new template is added to the database.</summary>
     event Action<TemplateDefinition>? TemplateAdded;
+
+    /// <summary>
+    /// Monotonic counter incremented whenever the tag or template structure changes
+    /// Consumed by the Controller Object (0xAC) for upload change detection.
+    /// </summary>
+    uint StructureVersion { get; }
+
 }
