@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using EthernetIPSharp.Cip;
+using EthernetIPSharp.Connections;
 
 namespace EthernetIPSharp.Logix;
 
@@ -15,6 +16,7 @@ public class LogixDispatcher : CipDispatcher
 
     private readonly SymbolObject _symbolObject;
     private readonly TemplateObject _templateObject;
+    private readonly ControllerObject _controllerObject;
 
     /// <summary>Cache of tag references by symbolic name — avoids repeated dictionary lookup.</summary>
     private readonly ConcurrentDictionary<string, Tag> _symbolCache = new(StringComparer.OrdinalIgnoreCase);
@@ -31,9 +33,11 @@ public class LogixDispatcher : CipDispatcher
         Tags = tags;
         _symbolObject = new SymbolObject(tags);
         _templateObject = new TemplateObject(tags);
+        _controllerObject = new ControllerObject(tags);
 
         RegisterClass(_symbolObject.CipClass);
         RegisterClass(_templateObject.CipClass);
+        RegisterClass(_controllerObject.CipClass);
 
         // Message Router with Multiple Service Packet
         var messageRouter = new CipClass(0x02, "Message Router", revision: 1);
@@ -45,7 +49,7 @@ public class LogixDispatcher : CipDispatcher
         RegisterClass(messageRouter);
 
         // Connection Manager with Unconnected Send support
-        var connMgr = new EthernetIPSharp.Connections.ConnectionManagerObject();
+        var connMgr = new ConnectionManagerObject();
         connMgr.DispatchRequest = (svc, path, data) => Dispatch(svc, path, data);
         RegisterClass(connMgr.CipClass);
 
