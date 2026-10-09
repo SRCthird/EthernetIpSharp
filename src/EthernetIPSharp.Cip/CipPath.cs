@@ -14,6 +14,7 @@ public readonly struct CipPath
     public ushort? AttributeId { get; init; }
     public ushort? ConnectionPoint { get; init; }
     public uint? ElementId { get; init; }
+    public IReadOnlyList<uint>? ElementIds { get; init; }
 
     /// <summary>Full symbolic path from ANSI Extended Symbolic Segments (e.g. "MyStruct.member").</summary>
     public string? SymbolicName { get; init; }
@@ -48,6 +49,7 @@ public readonly struct CipPath
         ushort? attributeId = null;
         ushort? connectionPoint = null;
         uint? elementId = null;
+        var elementIds = new List<uint>();
         StringBuilder? symbolicName = null;
         int offset = 0;
 
@@ -117,6 +119,7 @@ public readonly struct CipPath
                         break;
                     case LogicalTypeElementId:
                         elementId = value;
+                        elementIds.Add(value);
                         break;
                 }
             }
@@ -134,6 +137,7 @@ public readonly struct CipPath
             AttributeId = attributeId,
             ConnectionPoint = connectionPoint,
             ElementId = elementId,
+            ElementIds = elementIds,
             SymbolicName = symbolicName?.ToString(),
             RawPath = data.Slice(0, offset).ToArray(),
         }, offset);
