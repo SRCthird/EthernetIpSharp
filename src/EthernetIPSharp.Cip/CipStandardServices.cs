@@ -33,7 +33,7 @@ public static class CipStandardServices
     {
         var attrId = request.Path.AttributeId;
         if (attrId == null)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.PathSegmentError));
+            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.IOINotDecipheredOrTagNotFound));
 
         var attr = instance.GetAttribute(attrId.Value);
         if (attr == null)
@@ -55,7 +55,7 @@ public static class CipStandardServices
     {
         var attrId = request.Path.AttributeId;
         if (attrId == null)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.PathSegmentError));
+            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.IOINotDecipheredOrTagNotFound));
 
         var attr = instance.GetAttribute(attrId.Value);
         if (attr == null)
@@ -95,12 +95,12 @@ public static class CipStandardServices
         var span = request.Data.Span;
         if (span.Length < 2)
             return CipServiceResponse.Error(
-                request.ServiceCode, CipStatus.Error(CipStatus.NotEnoughData));
+                request.ServiceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
         int count = BinaryPrimitives.ReadUInt16LittleEndian(span);
         if (span.Length < 2 + count * 2)
             return CipServiceResponse.Error(
-                request.ServiceCode, CipStatus.Error(CipStatus.NotEnoughData));
+                request.ServiceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
         var ids = new ushort[count];
         for (int i = 0; i < count; i++)

@@ -49,7 +49,7 @@ public class LogixDispatcher : CipDispatcher
         RegisterClass(messageRouter);
 
         // Connection Manager with Unconnected Send support
-        var connMgr = new EthernetIPSharp.Connections.ConnectionManagerObject();
+        ConnectionManagerObject connMgr = new();
         connMgr.DispatchRequest = (svc, path, data) => Dispatch(svc, path, data);
         RegisterClass(connMgr.CipClass);
 
@@ -112,24 +112,96 @@ public class LogixDispatcher : CipDispatcher
     }
 
     protected override CipServiceResponse OnUnhandled(byte serviceCode, CipPath path,
-        ReadOnlyMemory<byte> data, byte defaultStatus = CipStatus.PathDestinationUnknown)
+        ReadOnlyMemory<byte> data, byte defaultStatus = CipStatus.UnknownDestination)
     {
-        if (path.SymbolicName != null)
-        {
-            // Fast path: check cache first
-            if (!_symbolCache.TryGetValue(path.SymbolicName, out var tag))
-            {
-                // Cache miss: look up and cache
-                tag = Tags.FindByName(path.SymbolicName);
-                if (tag == null)
-                    return CipServiceResponse.Error(serviceCode, CipStatus.Error(0x05));
-                _symbolCache[path.SymbolicName] = tag;
-            }
+        if (path.SymbolicName == null)
+            return base.OnUnhandled(serviceCode, path, data, defaultStatus);
 
-            return DispatchTagService(tag, serviceCode, data, path);
+        int dot = path.SymbolicName.IndexOf('.');
+        string rootName = dot < 0 ? path.SymbolicName : path.SymbolicName[..dot];
+        if (!_symbolCache.TryGetValue(rootName, out var tag))
+        {
+            tag = Tags.FindByName(rootName);
+            if (tag == null)
+                return CipServiceResponse.Error(serviceCode, CipStatus.Error(0x05));
+            _symbolCache[rootName] = tag;
         }
 
-        return base.OnUnhandled(serviceCode, path, data, defaultStatus);
+        if (dot < 0)
+            return DispatchTagService(tag, serviceCode, data, path);
+        if (!TryResolveMember(tag, path.SymbolicName[(dot + 1)..], path, out var value))
+            return CipServiceResponse.Error(serviceCode, CipStatus.Error(0x05));
+
+        return serviceCode switch
+        {
+            TagServices.ReadTag => MemberTagServices.Read(value, serviceCode, data, 0),
+            TagServices.WriteTag => MemberTagServices.Write(value, serviceCode, data, 0),
+            TagServices.ReadTagFragmented => MemberTagServices.ReadFragmented(value, serviceCode, data, 0),
+            TagServices.WriteTagFragmented => MemberTagServices.WriteFragmented(value, serviceCode, data, 0),
+            TagServices.ReadModifyWrite => MemberTagServices.ReadModifyWrite(value, serviceCode, data),
+            _ => CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.UnsupportedService)),
+        };
+    }
+
+    private bool TryResolveMember(
+        Tag tag, string memberPath, CipPath path, out LogixValue value)
+    {
+        value = null!;
+
+        if (!LogixDataTypes.IsStruct(tag.SymbolType))
+            return false;
+
+        var template = Tags.FindTemplate(LogixDataTypes.GetTemplateId(tag.SymbolType));
+        if (template == null)
+            return false;
+
+        // This server exposes the direct atomic UDT members used by Kepware.
+        // Nested structures require their own template traversal and are not
+        // silently treated as atomic values.
+        if (memberPath.Contains('.'))
+            return false;
+
+        var member = template.Members.FirstOrDefault(
+            m => string.Equals(m.Name, memberPath, StringComparison.OrdinalIgnoreCase));
+        if (member.Name == null || LogixDataTypes.GetElementSize(member.DataType) <= 0)
+            return false;
+
+        var elementIds = path.ElementIds ?? Array.Empty<uint>();
+        int rootIndex = 0;
+        int memberIndex = 0;
+        int elementCursor = 0;
+
+        if (tag.ElementCount > 1)
+        {
+            if (elementCursor >= elementIds.Count || elementIds[elementCursor] > int.MaxValue)
+                return false;
+            rootIndex = (int)elementIds[elementCursor++];
+        }
+
+        int memberCount = member.DataType == LogixDataTypes.BOOL ? 1 : Math.Max(1, member.ArraySize);
+
+        if (memberCount > 1 && elementCursor < elementIds.Count)
+        {
+            if (elementCursor >= elementIds.Count || elementIds[elementCursor] > int.MaxValue)
+                return false;
+            memberIndex = (int)elementIds[elementCursor++];
+        }
+
+        if (elementCursor != elementIds.Count)
+            return false;
+        if (rootIndex < 0 || rootIndex >= tag.ElementCount || memberIndex < 0 || memberIndex >= memberCount)
+            return false;
+
+        var resolved = new LogixValue(tag, member, rootIndex);
+        if (resolved.RootElementIndex != rootIndex)
+            return false;
+
+        // Convert the member element index into the member view once. The
+        // service handlers must never receive the root array index; the root
+        // index is already embedded in resolved.MemberOffset/base offset.
+        value = new LogixValue(tag, member, rootIndex, memberIndex);
+
+        return true;
     }
 
     internal static CipServiceResponse DispatchTagService(Tag tag, byte serviceCode,
@@ -143,7 +215,7 @@ public class LogixDispatcher : CipDispatcher
             TagServices.ReadTagFragmented => TagServices.HandleReadTagFragmented(tag, serviceCode, data, elementOffset),
             TagServices.WriteTagFragmented => TagServices.HandleWriteTagFragmented(tag, serviceCode, data, elementOffset),
             TagServices.ReadModifyWrite => TagServices.HandleReadModifyWrite(tag, serviceCode, data),
-            _ => CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.ServiceNotSupported)),
+            _ => CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.UnsupportedService)),
         };
     }
 }
