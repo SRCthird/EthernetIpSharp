@@ -43,9 +43,13 @@ public sealed class SymbolObject
         CipClass.AddInstanceService(new CipServiceDefinition(
             TagServices.ReadModifyWrite, "Read_Modify_Write", HandleInstanceReadModifyWrite));
 
+        CipClass.AddStandardInstanceServices();
+
         // Class-level service: Get_Instance_Attribute_List for tag browsing
-        CipClass.AddClassService(new CipServiceDefinition(
-            GetInstanceAttributeList, "Get_Instance_Attribute_List", HandleGetInstanceAttributeList));
+        var browseService = new CipServiceDefinition(
+            GetInstanceAttributeList, "Get_Instance_Attribute_List", HandleGetInstanceAttributeList);
+        CipClass.AddClassService(browseService);
+        CipClass.AddInstanceService(browseService);
     }
 
     /// <summary>
@@ -70,6 +74,11 @@ public sealed class SymbolObject
         // Attribute 2: Symbol Type (WORD)
         inst.AddAttribute(CipAttribute.Create(2, CipDataType.Word,
             AttributeAccess.GetSingle | AttributeAccess.GetAll, tag.SymbolType));
+
+        // Attribute 7: Bytes per element (UINT)
+        inst.AddAttribute(CipAttribute.Create(7, CipDataType.Uint,
+            AttributeAccess.GetSingle | AttributeAccess.GetAll,
+            (ushort)tag.ElementSize));
     }
 
     /// <summary>Resolve a Tag from a CIP instance — tries UserData first, falls back to database lookup.</summary>
@@ -180,12 +189,16 @@ public sealed class SymbolObject
                 int entrySize = attrId switch
                 {
                     1 => 2 + tag.Name.Length,
-                    2 => 2,
+                    2 or 7 => 2,
                     3 or 5 or 6 => 4,
                     8 => 12,
                     10 => 1,
                     _ => 0,
                 };
+                if (entrySize == 0)
+                    return CipServiceResponse.Error(request.ServiceCode,
+                        CipStatus.Error(CipStatus.AttributeNotSupported));
+
                 if (entrySize > 0 && offset + entrySize > maxResponseSize && tagsPacked > 0)
                 {
                     offset = entryStart;
@@ -216,6 +229,11 @@ public sealed class SymbolObject
                         BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(offset + 4), 0u);
                         BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(offset + 8), 0u);
                         offset += 12;
+                        break;
+                    case 7:    // Bytes per element (UINT)
+                        BinaryPrimitives.WriteUInt16LittleEndian(
+                            buffer.AsSpan(offset), (ushort)tag.ElementSize);
+                        offset += 2;
                         break;
                     case 10:   // External Access (USINT). 3 = Read/Write.
                         buffer[offset++] = 0x03;

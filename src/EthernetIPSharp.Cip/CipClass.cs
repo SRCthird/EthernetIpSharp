@@ -54,6 +54,7 @@ public class CipClass
         // Register standard class-level services
         AddClassService(new CipServiceDefinition(CipStandardServices.GetAttributeSingle, "Get_Attribute_Single", CipStandardServices.HandleGetAttributeSingle));
         AddClassService(new CipServiceDefinition(CipStandardServices.GetAttributeAll, "Get_Attributes_All", CipStandardServices.HandleGetAttributeAll));
+        AddClassService(new CipServiceDefinition(CipStandardServices.GetAttributeList, "Get_Attribute_List", CipStandardServices.HandleGetAttributeList));
     }
 
     /// <summary>
@@ -135,12 +136,16 @@ public class CipClass
 
     /// <summary>
     /// Convenience method to register the standard CIP instance services:
-    /// GetAttributeSingle (0x0E), SetAttributeSingle (0x10), GetAttributeAll (0x01).
+    ///   GetAttributeSingle (0x0E)
+    ///   SetAttributeSingle (0x10)
+    ///   GetAttributeAll (0x01)
+    ///   GetAttributeList (0x03)
     /// </summary>
     public void AddStandardInstanceServices()
     {
         AddInstanceService(new CipServiceDefinition(CipStandardServices.GetAttributeSingle, "Get_Attribute_Single", CipStandardServices.HandleGetAttributeSingle));
         AddInstanceService(new CipServiceDefinition(CipStandardServices.SetAttributeSingle, "Set_Attribute_Single", CipStandardServices.HandleSetAttributeSingle));
         AddInstanceService(new CipServiceDefinition(CipStandardServices.GetAttributeAll, "Get_Attributes_All", CipStandardServices.HandleGetAttributeAll));
+        AddInstanceService(new CipServiceDefinition(CipStandardServices.GetAttributeList, "Get_Attribute_List", CipStandardServices.HandleGetAttributeList));
     }
 }

@@ -24,8 +24,13 @@ public interface ITagDatabase
     /// <summary>Number of tags.</summary>
     int Count { get; }
 
+    uint StructureVersion { get; }
+
     /// <summary>Define a structure template (UDT) with the given members.</summary>
     TemplateDefinition AddTemplate(string name, params TemplateMember[] members);
+
+    /// <summary>Define a Logix STRING-family type: LEN (DINT) + DATA (SINT[length]).</summary>
+    TemplateDefinition AddStringType(string name, int length);
 
     /// <summary>Find a template by its instance ID.</summary>
     TemplateDefinition? FindTemplate(ushort instanceId);

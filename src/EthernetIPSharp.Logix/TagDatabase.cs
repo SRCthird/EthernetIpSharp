@@ -11,6 +11,11 @@ public sealed class TagDatabase : ITagDatabase
     private readonly ConcurrentDictionary<string, Tag> _byName = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<uint, Tag> _byInstanceId = new();
     private uint _nextInstanceId = 1;
+    private uint _structureVersion;
+
+    /// <inheritdoc />
+    public uint StructureVersion => Volatile.Read(ref _structureVersion);
+
 
     /// <summary>Fires when any tag's data changes (from any source).</summary>
     public event Action<Tag, TagChangeInfo>? AnyTagChanged;
@@ -40,6 +45,7 @@ public sealed class TagDatabase : ITagDatabase
             elementCount: elementCount);
 
         RegisterTag(tag);
+        Interlocked.Increment(ref _structureVersion);
         return tag;
     }
 
@@ -58,6 +64,7 @@ public sealed class TagDatabase : ITagDatabase
             elementCount: elementCount);
 
         RegisterTag(tag);
+        Interlocked.Increment(ref _structureVersion);
         return tag;
     }
 
@@ -117,6 +124,24 @@ public sealed class TagDatabase : ITagDatabase
     /// - The host SINT is named "ZZZZZZZZZZname#" and is not visible in Data Monitor
     /// </summary>
     public TemplateDefinition AddTemplate(string name, params TemplateMember[] members)
+        => AddTemplate(name, isString: false, members);
+
+    /// <summary>
+    /// Define a Logix STRING-family type with the controller's layout:
+    /// LEN : DINT at offset 0, DATA : SINT[length] at offset 4.
+    /// Clients present DATA as one string of <paramref name="length"/> characters.
+    /// </summary>
+    public TemplateDefinition AddStringType(string name, int length)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(length, 1);
+        return AddTemplate(name, isString: true,
+        [
+            new TemplateMember("LEN", LogixDataTypes.DINT),
+            new TemplateMember("DATA", LogixDataTypes.SINT, arraySize: length),
+        ]);
+    }
+
+    private TemplateDefinition AddTemplate(string name, bool isString, TemplateMember[] members)
     {
         ushort instanceId = (ushort)Interlocked.Increment(ref _nextTemplateId);
 
@@ -181,10 +206,12 @@ public sealed class TagDatabase : ITagDatabase
             name: name,
             structureHandle: structHandle,
             structureSize: (uint)offset,
-            members: resolvedMembers.ToArray());
+            members: resolvedMembers.ToArray(),
+            isString: isString);
 
         _templates[instanceId] = template;
         TemplateAdded?.Invoke(template);
+        Interlocked.Increment(ref _structureVersion);
         return template;
     }
 
@@ -299,23 +326,32 @@ public sealed class TemplateDefinition
     /// <summary>Number of members in this structure.</summary>
     public int MemberCount => Members.Count;
 
+    /// <summary>
+    /// True for STRING-family types (LEN + DATA). Served as Template
+    /// attribute 6 so clients present DATA as a single string.
+    /// </summary>
+    public bool IsString { get; }
+
     /// <summary>Template Object Definition Size in 32-bit words (used by Template Read service).</summary>
     public uint DefinitionSize { get; }
 
     public TemplateDefinition(ushort instanceId, string name, ushort structureHandle,
-                              uint structureSize, TemplateMemberInfo[] members)
+        uint structureSize, TemplateMemberInfo[] members, bool isString)
     {
         InstanceId = instanceId;
         Name = name;
         StructureHandle = structureHandle;
         StructureSize = structureSize;
-        Members = members;
+        Members = members; 
+        IsString = isString;
+        DefinitionSize = (uint)(DefinitionDataLength(name, members) / 4) + 5;
+    }
 
-        // Definition size = (member_count * 8 bytes per member + name bytes + padding) / 4
-        int nameBytes = name.Length + 1; // null-terminated
-        foreach (var m in members) nameBytes += m.Name.Length + 1;
-        int totalBytes = members.Length * 8 + nameBytes;
-        totalBytes = (totalBytes + 3) / 4 * 4; // pad to 32-bit
-        DefinitionSize = (uint)(totalBytes / 4) + 6; // +6 for header words (+23 bytes overhead)
+    public static int DefinitionDataLength(string name, IReadOnlyList<TemplateMemberInfo> members)
+    {
+        int length = members.Count * 8 + name.Length + 1;
+        foreach (var m in members)
+            length += m.Name.Length + 1;
+        return (length + 3) / 4 * 4;
     }
 }

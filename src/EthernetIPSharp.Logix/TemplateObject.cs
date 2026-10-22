@@ -15,7 +15,8 @@ public sealed class TemplateObject
     /// <summary>CIP class code for Template Object.</summary>
     public const uint ClassCode = 0x6C;
 
-    private readonly ITagDatabase _tags;
+    /// <summary>Member type flag: the member is an array (Info = element count).</summary>
+    private const ushort ArrayMemberFlag = 0x2000;
 
     /// <summary>The CIP class object for registration in the dispatcher.</summary>
     public CipClass CipClass { get; }
@@ -26,12 +27,9 @@ public sealed class TemplateObject
     /// </summary>
     public TemplateObject(ITagDatabase tags)
     {
-        _tags = tags;
         CipClass = new CipClass(ClassCode, "Template", revision: 1);
 
         // Instance-level services
-        CipClass.AddInstanceService(new CipServiceDefinition(
-            0x03, "Get_Attribute_List", HandleGetAttributeList));
         CipClass.AddInstanceService(new CipServiceDefinition(
             0x4C, "Template_Read", HandleTemplateRead));
         CipClass.AddStandardInstanceServices();
@@ -45,72 +43,22 @@ public sealed class TemplateObject
         var inst = CipClass.CreateInstance(template.InstanceId);
         inst.UserData = template;
 
+        const AttributeAccess get = AttributeAccess.GetSingle | AttributeAccess.GetAll;
+
         // Attribute 1: Structure Handle (UINT)
-        inst.AddAttribute(CipAttribute.Create(1, CipDataType.Uint,
-            AttributeAccess.GetSingle | AttributeAccess.GetAll, template.StructureHandle));
-
+        inst.AddAttribute(CipAttribute.Create(1, CipDataType.Uint, get, template.StructureHandle));
         // Attribute 2: Member Count (UINT)
-        inst.AddAttribute(CipAttribute.Create(2, CipDataType.Uint,
-            AttributeAccess.GetSingle | AttributeAccess.GetAll, (ushort)template.MemberCount));
-
-        // Attribute 4: Template Object Definition Size (UDINT) — in 32-bit words
-        inst.AddAttribute(CipAttribute.Create(4, CipDataType.Udint,
-            AttributeAccess.GetSingle | AttributeAccess.GetAll, template.DefinitionSize));
-
+        inst.AddAttribute(CipAttribute.Create(2, CipDataType.Uint, get, (ushort)template.MemberCount));
+        // Attribute 3: Structure Size (UINT) — controllers repeat attribute 5 here
+        inst.AddAttribute(CipAttribute.Create(3, CipDataType.Uint, get, (ushort)template.StructureSize));
+        // Attribute 4: Template Object Definition Size (UDINT) — 32-bit words
+        inst.AddAttribute(CipAttribute.Create(4, CipDataType.Udint, get, template.DefinitionSize));
         // Attribute 5: Template Structure Size (UDINT) — bytes on wire
-        inst.AddAttribute(CipAttribute.Create(5, CipDataType.Udint,
-            AttributeAccess.GetSingle | AttributeAccess.GetAll, template.StructureSize));
-    }
-
-    /// <summary>
-    /// Get_Attribute_List (0x03) on a template instance.
-    /// Request: attr_count (UINT) + attr_ids[]
-    /// Response: count (UINT) + [attr_id (UINT) + status (UINT) + data]...
-    /// </summary>
-    private CipServiceResponse HandleGetAttributeList(CipInstance instance, CipServiceRequest request)
-    {
-        if (request.Data.Length < 2)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x13));
-
-        var span = request.Data.Span;
-        ushort attrCount = BinaryPrimitives.ReadUInt16LittleEndian(span);
-
-        if (request.Data.Length < 2 + attrCount * 2)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x1C));
-
-        var buffer = new byte[512];
-        int offset = 0;
-
-        // Count of items
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset), attrCount);
-        offset += 2;
-
-        for (int i = 0; i < attrCount; i++)
-        {
-            ushort attrId = BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(2 + i * 2));
-
-            // Attribute ID
-            BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset), attrId);
-            offset += 2;
-
-            var attr = instance.GetAttribute(attrId);
-            if (attr != null)
-            {
-                // Status: success
-                BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset), 0);
-                offset += 2;
-                // Attribute data
-                offset += attr.EncodeTo(buffer.AsSpan(offset));
-            }
-            else
-            {
-                // Status: attribute not supported
-                BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset), 0x0014);
-                offset += 2;
-            }
-        }
-
-        return CipServiceResponse.Success(request.ServiceCode, buffer.AsMemory(0, offset));
+        inst.AddAttribute(CipAttribute.Create(5, CipDataType.Udint, get, template.StructureSize));
+        // Attribute 6: string flag (UINT) — 1 for STRING-family types, 0 otherwise.
+        // Clients use it to present DATA as a single string (STRING.DATA/82).
+        inst.AddAttribute(CipAttribute.Create(6, CipDataType.Uint, get,
+            template.IsString ? (ushort)1 : (ushort)0));
     }
 
     /// <summary>
@@ -169,51 +117,28 @@ public sealed class TemplateObject
     /// </summary>
     private static byte[] BuildTemplateDefinitionData(TemplateDefinition template)
     {
-        // Calculate total size
-        int memberInfoSize = template.MemberCount * 8; // 4 bytes type+info + 4 bytes offset per member
-        int nameBytes = template.Name.Length + 1; // null-terminated template name
-        foreach (var m in template.Members)
-            nameBytes += m.Name.Length + 1;
-
-        int totalSize = memberInfoSize + nameBytes;
-        // Pad to 4-byte boundary
-        totalSize = (totalSize + 3) / 4 * 4;
-
-        var data = new byte[totalSize];
+        var data = new byte[TemplateDefinition.DefinitionDataLength(template.Name, template.Members)];
         int offset = 0;
 
         // Member info entries
         foreach (var member in template.Members)
         {
-            // Lower 16 bits: INFO value
-            // - Atomic: 0
-            // - Array: array size
-            // - Bool: bit position
-            ushort infoValue = member.ArraySize > 0 ? (ushort)member.ArraySize : (ushort)0;
+            bool isArray = member.DataType != LogixDataTypes.BOOL && member.ArraySize > 0;
+            ushort type = isArray ? (ushort)(member.DataType | ArrayMemberFlag) : member.DataType;
 
-            // Upper 16 bits: data type
-            ushort typeValue = member.DataType;
-
-            // Pack as UDINT: upper 16 = type, lower 16 = info
-            uint typeAndInfo = (uint)(typeValue << 16) | infoValue;
-            BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(offset), typeAndInfo);
-            offset += 4;
-
-            // Member offset in structure
-            BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(offset), (uint)member.Offset);
-            offset += 4;
+            BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(offset), (ushort)member.ArraySize);
+            BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(offset + 2), type);
+            BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(offset + 4), (uint)member.Offset);
+            offset += 8;
         }
 
-        // Template name (null-terminated)
-        Encoding.ASCII.GetBytes(template.Name, data.AsSpan(offset));
-        offset += template.Name.Length;
+        offset += Encoding.ASCII.GetBytes(template.Name, data.AsSpan(offset));
         data[offset++] = 0;
 
         // Member names (null-terminated)
         foreach (var member in template.Members)
         {
-            Encoding.ASCII.GetBytes(member.Name, data.AsSpan(offset));
-            offset += member.Name.Length;
+            offset += Encoding.ASCII.GetBytes(member.Name, data.AsSpan(offset));
             data[offset++] = 0;
         }
 

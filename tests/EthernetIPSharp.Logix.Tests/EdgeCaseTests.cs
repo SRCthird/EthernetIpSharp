@@ -220,7 +220,7 @@ public class EdgeCaseTests
         var logix = CreateDispatcher();
         var path = new CipPath { SymbolicName = "rate" };
         var response = logix.Dispatch(0xFF, path, new byte[] { 0x01, 0x00 });
-        Assert.Equal(CipStatus.ServiceNotSupported, response.Status.GeneralStatus);
+        Assert.Equal(CipStatus.UnsupportedService, response.Status.GeneralStatus);
     }
 
     // --- Duplicate ForwardOpen ---

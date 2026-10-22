@@ -138,7 +138,7 @@ public sealed class SafetySupervisorObject
     private CipServiceResponse HandleSafetyReset(CipInstance instance, CipServiceRequest request)
     {
         if (request.Data.Length < 1)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.NotEnoughData));
+            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
         byte resetType = request.Data.Span[0];
 
@@ -175,7 +175,7 @@ public sealed class SafetySupervisorObject
     private CipServiceResponse HandleProposeTunid(CipInstance instance, CipServiceRequest request)
     {
         if (request.Data.Length < UniqueNetworkId.Size)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.NotEnoughData));
+            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
         var proposed = UniqueNetworkId.Parse(request.Data.Span);
 
@@ -203,7 +203,7 @@ public sealed class SafetySupervisorObject
     private CipServiceResponse HandleApplyTunid(CipInstance instance, CipServiceRequest request)
     {
         if (request.Data.Length < UniqueNetworkId.Size)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.NotEnoughData));
+            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
         if (_proposedTunid == null)
             return CipServiceResponse.Error(request.ServiceCode,
