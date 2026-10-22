@@ -31,8 +31,6 @@ public sealed class TemplateObject
 
         // Instance-level services
         CipClass.AddInstanceService(new CipServiceDefinition(
-            0x03, "Get_Attribute_List", HandleGetAttributeList));
-        CipClass.AddInstanceService(new CipServiceDefinition(
             0x4C, "Template_Read", HandleTemplateRead));
         CipClass.AddStandardInstanceServices();
     }
@@ -60,57 +58,6 @@ public sealed class TemplateObject
         // Attribute 5: Template Structure Size (UDINT) — bytes on wire
         inst.AddAttribute(CipAttribute.Create(5, CipDataType.Udint,
             AttributeAccess.GetSingle | AttributeAccess.GetAll, template.StructureSize));
-    }
-
-    /// <summary>
-    /// Get_Attribute_List (0x03) on a template instance.
-    /// Request: attr_count (UINT) + attr_ids[]
-    /// Response: count (UINT) + [attr_id (UINT) + status (UINT) + data]...
-    /// </summary>
-    private CipServiceResponse HandleGetAttributeList(CipInstance instance, CipServiceRequest request)
-    {
-        if (request.Data.Length < 2)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x13));
-
-        var span = request.Data.Span;
-        ushort attrCount = BinaryPrimitives.ReadUInt16LittleEndian(span);
-
-        if (request.Data.Length < 2 + attrCount * 2)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x1C));
-
-        var buffer = new byte[512];
-        int offset = 0;
-
-        // Count of items
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset), attrCount);
-        offset += 2;
-
-        for (int i = 0; i < attrCount; i++)
-        {
-            ushort attrId = BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(2 + i * 2));
-
-            // Attribute ID
-            BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset), attrId);
-            offset += 2;
-
-            var attr = instance.GetAttribute(attrId);
-            if (attr != null)
-            {
-                // Status: success
-                BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset), 0);
-                offset += 2;
-                // Attribute data
-                offset += attr.EncodeTo(buffer.AsSpan(offset));
-            }
-            else
-            {
-                // Status: attribute not supported
-                BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset), 0x0014);
-                offset += 2;
-            }
-        }
-
-        return CipServiceResponse.Success(request.ServiceCode, buffer.AsMemory(0, offset));
     }
 
     /// <summary>
