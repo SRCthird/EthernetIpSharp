@@ -34,11 +34,11 @@ public class CipDispatcher : ICipDispatch
     {
         // No class in path — delegate to subclass (e.g. symbolic tag dispatch).
         if (path.ClassId == null)
-            return OnUnhandled(serviceCode, path, data, CipStatus.PathDestinationUnknown);
+            return OnUnhandled(serviceCode, path, data, CipStatus.UnknownDestination);
 
         // Class not registered.
         if (!_classes.TryGetValue(path.ClassId.Value, out var cipClass))
-            return OnUnhandled(serviceCode, path, data, CipStatus.PathDestinationUnknown);
+            return OnUnhandled(serviceCode, path, data, CipStatus.UnknownDestination);
 
         uint instanceId = path.InstanceId ?? 0;
         bool isClassLevel = instanceId == 0;
@@ -51,7 +51,7 @@ public class CipDispatcher : ICipDispatch
         // Service not supported on this class.
         var service = cipClass.GetService(serviceCode, isClassLevel);
         if (service == null)
-            return OnUnhandled(serviceCode, path, data, CipStatus.ServiceNotSupported);
+            return OnUnhandled(serviceCode, path, data, CipStatus.UnsupportedService);
 
         var request = new CipServiceRequest
         {
@@ -75,7 +75,7 @@ public class CipDispatcher : ICipDispatch
     /// override see no behavior change.
     /// </summary>
     protected virtual CipServiceResponse OnUnhandled(byte serviceCode, CipPath path,
-        ReadOnlyMemory<byte> data, byte defaultStatus = CipStatus.PathDestinationUnknown)
+        ReadOnlyMemory<byte> data, byte defaultStatus = CipStatus.UnknownDestination)
     {
         return CipServiceResponse.Error(serviceCode, CipStatus.Error(defaultStatus));
     }

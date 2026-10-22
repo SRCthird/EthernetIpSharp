@@ -106,7 +106,7 @@ public class MockTests
         var path = new CipPath { ClassId = 0xFF };
         var response = dispatcher.Dispatch(0x4C, path, new byte[] { 0x01, 0x00 });
 
-        Assert.Equal(CipStatus.PathDestinationUnknown, response.Status.GeneralStatus);
+        Assert.Equal(CipStatus.UnknownDestination, response.Status.GeneralStatus);
     }
 
     [Fact]

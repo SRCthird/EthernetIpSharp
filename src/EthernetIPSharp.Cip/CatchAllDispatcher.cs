@@ -44,7 +44,7 @@ public sealed class CatchAllDispatcher : CipDispatcher
     public void SetHandler(Handler h) => _handler = h;
 
     protected override CipServiceResponse OnUnhandled(byte serviceCode, CipPath path,
-        ReadOnlyMemory<byte> data, byte defaultStatus = CipStatus.PathDestinationUnknown)
+        ReadOnlyMemory<byte> data, byte defaultStatus = CipStatus.UnknownDestination)
     {
         if (_handler == null)
             return base.OnUnhandled(serviceCode, path, data, defaultStatus);

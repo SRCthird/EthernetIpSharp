@@ -253,7 +253,7 @@ public sealed class ConnectionManagerObject
     private CipServiceResponse HandleForwardClose(CipInstance instance, CipServiceRequest request)
     {
         if (request.Data.Length < 10)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.NotEnoughData));
+            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
         var data = request.Data.Span;
         int offset = 2; // Skip priority/time_tick and timeout_ticks
@@ -317,10 +317,10 @@ public sealed class ConnectionManagerObject
     private CipServiceResponse HandleUnconnectedSend(CipInstance instance, CipServiceRequest request)
     {
         if (DispatchRequest == null)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.ServiceNotSupported));
+            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.UnsupportedService));
 
         if (request.Data.Length < 4)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.NotEnoughData));
+            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
         var span = request.Data.Span;
         // Skip priority/time_tick (1) + timeout_ticks (1)
@@ -328,14 +328,14 @@ public sealed class ConnectionManagerObject
         ushort msgLength = BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(offset)); offset += 2;
 
         if (offset + msgLength > request.Data.Length)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.NotEnoughData));
+            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
         // Extract the embedded MR request
         var embeddedRequest = request.Data.Slice(offset, msgLength);
 
         // Parse the embedded MR request
         if (!MrCodec.TryParseRequest(embeddedRequest, out var serviceCode, out var path, out var data))
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.PathSegmentError));
+            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.IOINotDecipheredOrTagNotFound));
 
         // Dispatch the inner request through the full CIP dispatch chain
         return DispatchRequest(serviceCode, path, data);

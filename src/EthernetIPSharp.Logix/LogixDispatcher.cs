@@ -112,7 +112,7 @@ public class LogixDispatcher : CipDispatcher
     }
 
     protected override CipServiceResponse OnUnhandled(byte serviceCode, CipPath path,
-        ReadOnlyMemory<byte> data, byte defaultStatus = CipStatus.PathDestinationUnknown)
+        ReadOnlyMemory<byte> data, byte defaultStatus = CipStatus.UnknownDestination)
     {
         if (path.SymbolicName != null)
         {
@@ -143,7 +143,7 @@ public class LogixDispatcher : CipDispatcher
             TagServices.ReadTagFragmented => TagServices.HandleReadTagFragmented(tag, serviceCode, data, elementOffset),
             TagServices.WriteTagFragmented => TagServices.HandleWriteTagFragmented(tag, serviceCode, data, elementOffset),
             TagServices.ReadModifyWrite => TagServices.HandleReadModifyWrite(tag, serviceCode, data),
-            _ => CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.ServiceNotSupported)),
+            _ => CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.UnsupportedService)),
         };
     }
 }
