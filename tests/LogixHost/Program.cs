@@ -19,11 +19,7 @@ var identity = new IdentityInfo
 
 var logix = new LogixDispatcher(new TagDatabase(), identity);
 
-var stringTemplate = logix.Tags.AddTemplate(
-    "STRING",
-    new TemplateMember("LEN", LogixDataTypes.DINT),
-    new TemplateMember("DATA", LogixDataTypes.SINT, arraySize: 82)
-    );
+var stringTemplate = logix.Tags.AddStringType("STRING;82", 82);
 
 var motorStatusTemplate = logix.Tags.AddTemplate(
     "MotorStatus",
