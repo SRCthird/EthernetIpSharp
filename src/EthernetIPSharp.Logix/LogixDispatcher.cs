@@ -17,6 +17,7 @@ public class LogixDispatcher : CipDispatcher
     private readonly SymbolObject _symbolObject;
     private readonly TemplateObject _templateObject;
     private readonly ControllerObject _controllerObject;
+    private readonly ProgramObject _programObject;
 
     /// <summary>Cache of tag references by symbolic name — avoids repeated dictionary lookup.</summary>
     private readonly ConcurrentDictionary<string, Tag> _symbolCache = new(StringComparer.OrdinalIgnoreCase);
@@ -34,10 +35,12 @@ public class LogixDispatcher : CipDispatcher
         _symbolObject = new SymbolObject(tags);
         _templateObject = new TemplateObject(tags);
         _controllerObject = new ControllerObject(tags);
+        _programObject = new ProgramObject();
 
         RegisterClass(_symbolObject.CipClass);
         RegisterClass(_templateObject.CipClass);
         RegisterClass(_controllerObject.CipClass);
+        RegisterClass(_programObject.CipClass);
 
         // Message Router with Multiple Service Packet
         var messageRouter = new CipClass(0x02, "Message Router", revision: 1);
