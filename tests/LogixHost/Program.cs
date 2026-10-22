@@ -19,21 +19,26 @@ var identity = new IdentityInfo
 
 var logix = new LogixDispatcher(new TagDatabase(), identity);
 
+var stringTemplate = logix.Tags.AddTemplate(
+    "STRING",
+    new TemplateMember("LEN", LogixDataTypes.DINT),
+    new TemplateMember("DATA", LogixDataTypes.SINT, arraySize: 82)
+    );
+
 // Add test tags
-logix.Tags.AddTag("rate", LogixDataTypes.DINT).Write(0, 534);
-logix.Tags.AddTag("temperature", LogixDataTypes.REAL).Write(0, 72.5f);
-logix.Tags.AddTag("counts", LogixDataTypes.INT, elementCount: 10);
-logix.Tags.AddTag("asset", LogixDataTypes.SHORT_STRING).WriteSString("Asset-32");
+logix.Tags.AddTag("BOOL", LogixDataTypes.BOOL);
+logix.Tags.AddTag("DINT", LogixDataTypes.DINT, elementCount: 4);
+logix.Tags.AddTag("INT", LogixDataTypes.INT);
+logix.Tags.AddTag("LINT", LogixDataTypes.LINT);
+logix.Tags.AddTag("LREAL", LogixDataTypes.LREAL);
+logix.Tags.AddTag("REAL", LogixDataTypes.REAL);
+logix.Tags.AddTag("SINT", LogixDataTypes.SINT);
+logix.Tags.AddTag("STRING", stringTemplate);
 
 var adapter = new EipAdapter(logix, identity);
-await adapter.ListenAsync(IPAddress.Loopback, 44818);
+await adapter.ListenAsync(IPAddress.Parse("0.0.0.0"), 44818);
 
-Console.WriteLine("Logix simulator running on 127.0.0.1:44818");
-Console.WriteLine("Tags:");
-Console.WriteLine("    rate(DINT)=534,");
-Console.WriteLine("    temperature(REAL)=72.5,");
-Console.WriteLine("    counts(INT[10]),");
-Console.WriteLine("    asset(SHORT_STRING)=\"Asset-32\"");
+Console.WriteLine("Logix simulator running on 0.0.0.0:44818");
 Console.WriteLine("Press Ctrl+C to stop.");
 
 await Task.Delay(Timeout.Infinite, new CancellationTokenSource().Token);
