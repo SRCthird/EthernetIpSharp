@@ -46,8 +46,10 @@ public sealed class SymbolObject
         CipClass.AddStandardInstanceServices();
 
         // Class-level service: Get_Instance_Attribute_List for tag browsing
-        CipClass.AddClassService(new CipServiceDefinition(
-            GetInstanceAttributeList, "Get_Instance_Attribute_List", HandleGetInstanceAttributeList));
+        var browseService = new CipServiceDefinition(
+            GetInstanceAttributeList, "Get_Instance_Attribute_List", HandleGetInstanceAttributeList);
+        CipClass.AddClassService(browseService);
+        CipClass.AddInstanceService(browseService);
     }
 
     /// <summary>
