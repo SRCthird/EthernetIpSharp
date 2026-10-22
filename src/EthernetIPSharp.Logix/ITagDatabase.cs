@@ -24,6 +24,8 @@ public interface ITagDatabase
     /// <summary>Number of tags.</summary>
     int Count { get; }
 
+    uint StructureVersion { get; }
+
     /// <summary>Define a structure template (UDT) with the given members.</summary>
     TemplateDefinition AddTemplate(string name, params TemplateMember[] members);
 

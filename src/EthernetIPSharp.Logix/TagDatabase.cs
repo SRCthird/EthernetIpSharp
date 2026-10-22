@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Threading;
 
 namespace EthernetIPSharp.Logix;
 
@@ -11,6 +12,11 @@ public sealed class TagDatabase : ITagDatabase
     private readonly ConcurrentDictionary<string, Tag> _byName = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<uint, Tag> _byInstanceId = new();
     private uint _nextInstanceId = 1;
+    private uint _structureVersion;
+
+    /// <inheritdoc />
+    public uint StructureVersion => Volatile.Read(ref _structureVersion);
+
 
     /// <summary>Fires when any tag's data changes (from any source).</summary>
     public event Action<Tag, TagChangeInfo>? AnyTagChanged;
@@ -40,6 +46,7 @@ public sealed class TagDatabase : ITagDatabase
             elementCount: elementCount);
 
         RegisterTag(tag);
+        Interlocked.Increment(ref _structureVersion);
         return tag;
     }
 
@@ -58,6 +65,7 @@ public sealed class TagDatabase : ITagDatabase
             elementCount: elementCount);
 
         RegisterTag(tag);
+        Interlocked.Increment(ref _structureVersion);
         return tag;
     }
 
@@ -185,6 +193,7 @@ public sealed class TagDatabase : ITagDatabase
 
         _templates[instanceId] = template;
         TemplateAdded?.Invoke(template);
+        Interlocked.Increment(ref _structureVersion);
         return template;
     }
 
