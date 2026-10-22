@@ -166,31 +166,30 @@ public class LogixDispatcher : CipDispatcher
         if (member.Name == null || LogixDataTypes.GetElementSize(member.DataType) <= 0)
             return false;
 
-        var elementIds = path.ElementIds;
-        int rootIndex;
+        var elementIds = path.ElementIds ?? Array.Empty<uint>();
+        int rootIndex = 0;
         int memberIndex = 0;
+        int elementCursor = 0;
 
-        if (elementIds is { Count: > 0 })
+        if (tag.ElementCount > 1)
         {
-            rootIndex = checked((int)elementIds[0]);
-            if (elementIds.Count > 1)
-                memberIndex = checked((int)elementIds[1]);
-        }
-        else
-        {
-            // A member request for an array UDT must carry its root element.
-            // Do not silently map a missing index to element zero.
-            if (tag.ElementCount > 1)
+            if (elementCursor >= elementIds.Count || elementIds[elementCursor] > int.MaxValue)
                 return false;
-            rootIndex = 0;
+            rootIndex = (int)elementIds[elementCursor++];
         }
 
-        int memberCount = member.DataType == LogixDataTypes.BOOL
-            ? 1
-            : Math.Max(1, member.ArraySize);
+        int memberCount = member.DataType == LogixDataTypes.BOOL ? 1 : Math.Max(1, member.ArraySize);
 
-        if (rootIndex < 0 || rootIndex >= tag.ElementCount ||
-            memberIndex < 0 || memberIndex >= memberCount)
+        if (memberCount > 1 && elementCursor < elementIds.Count)
+        {
+            if (elementCursor >= elementIds.Count || elementIds[elementCursor] > int.MaxValue)
+                return false;
+            memberIndex = (int)elementIds[elementCursor++];
+        }
+
+        if (elementCursor != elementIds.Count)
+            return false;
+        if (rootIndex < 0 || rootIndex >= tag.ElementCount || memberIndex < 0 || memberIndex >= memberCount)
             return false;
 
         var resolved = new LogixValue(tag, member, rootIndex);
