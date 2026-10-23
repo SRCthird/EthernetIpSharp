@@ -29,6 +29,14 @@ public static class LogixDataTypes
     public const ushort DINT = 0x00C4;
     /// <summary>LINT — signed 64-bit integer, 8 bytes.</summary>
     public const ushort LINT = 0x00C5;
+    /// <summary>USINT — unsigned 8-bit integer, 1 byte.</summary>
+    public const ushort USINT = 0x00C6;
+    /// <summary>UINT — unsigned 16-bit integer, 2 bytes.</summary>
+    public const ushort UINT = 0x00C7;
+    /// <summary>UDINT — unsigned 32-bit integer, 4 bytes.</summary>
+    public const ushort UDINT = 0x00C8;
+    /// <summary>ULINT — unsigned 64-bit integer, 8 bytes.</summary>
+    public const ushort ULINT = 0x00C9;
     /// <summary>REAL — 32-bit IEEE float, 4 bytes.</summary>
     public const ushort REAL = 0x00CA;
     /// <summary>LREAL — 64-bit IEEE double, 8 bytes.</summary>
@@ -74,6 +82,10 @@ public static class LogixDataTypes
             0xC3 => 2,  // INT
             0xC4 => 4,  // DINT
             0xC5 => 8,  // LINT
+            0xC6 => 1,  // USINT
+            0xC7 => 2,  // UINT
+            0xC8 => 4,  // UDINT
+            0xC9 => 8,  // ULINT
             0xCA => 4,  // REAL
             0xCB => 8,  // LREAL
             0xD3 => 4,  // DWORD
