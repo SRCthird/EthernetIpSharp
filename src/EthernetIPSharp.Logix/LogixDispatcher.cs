@@ -172,7 +172,7 @@ public class LogixDispatcher : CipDispatcher
             var programName = first["PROGRAM:".Length..];
             var program = _programObject.FindByName(programName);
             if (program == null || dot < 0 || dot == symbolicName.Length - 1)
-                return CipServiceResponse.Error(serviceCode, CipStatus.Error(0x05));
+                return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.UnknownDestination));
 
             return DispatchScopedTagService(
                 program.Tags,
@@ -218,7 +218,7 @@ public class LogixDispatcher : CipDispatcher
                 symbolicName[(dot + 1)..],
                 path,
                 out var value))
-            return CipServiceResponse.Error(serviceCode, CipStatus.Error(0x05));
+            return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.UnknownDestination));
 
         return serviceCode switch
         {

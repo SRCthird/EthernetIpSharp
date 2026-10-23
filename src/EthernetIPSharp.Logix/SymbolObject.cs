@@ -107,7 +107,7 @@ public sealed class SymbolObject
     private CipServiceResponse HandleInstanceReadTag(CipInstance instance, CipServiceRequest request)
     {
         var tag = GetTagFromInstance(instance, request.Path);
-        if (tag == null) return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x05));
+        if (tag == null) return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.UnknownDestination));
         int elementOffset = (int)(request.Path.ElementId ?? 0);
         return TagServices.HandleReadTag(tag, request.ServiceCode, request.Data, elementOffset);
     }
@@ -115,7 +115,7 @@ public sealed class SymbolObject
     private CipServiceResponse HandleInstanceWriteTag(CipInstance instance, CipServiceRequest request)
     {
         var tag = GetTagFromInstance(instance, request.Path);
-        if (tag == null) return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x05));
+        if (tag == null) return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.UnknownDestination));
         int elementOffset = (int)(request.Path.ElementId ?? 0);
         return TagServices.HandleWriteTag(tag, request.ServiceCode, request.Data, elementOffset);
     }
@@ -124,7 +124,7 @@ public sealed class SymbolObject
     {
         int elementOffset = (int)(request.Path.ElementId ?? 0);
         var tag = GetTagFromInstance(instance, request.Path);
-        if (tag == null) return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x05));
+        if (tag == null) return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.UnknownDestination));
         return TagServices.HandleReadTagFragmented(tag, request.ServiceCode, request.Data, elementOffset);
     }
 
@@ -132,14 +132,14 @@ public sealed class SymbolObject
     {
         int elementOffset = (int)(request.Path.ElementId ?? 0);
         var tag = GetTagFromInstance(instance, request.Path);
-        if (tag == null) return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x05));
+        if (tag == null) return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.UnknownDestination));
         return TagServices.HandleWriteTagFragmented(tag, request.ServiceCode, request.Data, elementOffset);
     }
 
     private CipServiceResponse HandleInstanceReadModifyWrite(CipInstance instance, CipServiceRequest request)
     {
         var tag = GetTagFromInstance(instance, request.Path);
-        if (tag == null) return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x05));
+        if (tag == null) return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.UnknownDestination));
         return TagServices.HandleReadModifyWrite(tag, request.ServiceCode, request.Data);
     }
 
@@ -153,13 +153,13 @@ public sealed class SymbolObject
     private CipServiceResponse HandleGetInstanceAttributeList(CipInstance classInstance, CipServiceRequest request)
     {
         if (request.Data.Length < 2)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x13));
+            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
         var span = request.Data.Span;
         ushort attrCount = BinaryPrimitives.ReadUInt16LittleEndian(span);
 
         if (request.Data.Length < 2 + attrCount * 2)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x13));
+            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
         // Parse requested attribute IDs
         var requestedAttrs = new ushort[attrCount];
@@ -169,7 +169,7 @@ public sealed class SymbolObject
         var startInstance = request.Path.InstanceId ?? 0;
         var scope = _scopeResolver(request.Path.SymbolicName);
         if (scope == null)
-            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x05));
+            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(CipStatus.UnknownDestination));
         
         var tags = scope.AllTags
             .Where(t => t.InstanceId > startInstance)
@@ -282,7 +282,7 @@ public sealed class SymbolObject
             return new CipServiceResponse
             {
                 ServiceCode = (byte)(request.ServiceCode | 0x80),
-                Status = CipStatus.Error(0x06), // More data
+                Status = CipStatus.Error(CipStatus.DataDoesNotFitInResponsePacket), // More data
                 Data = buffer.AsMemory(0, offset),
             };
         }
