@@ -94,7 +94,7 @@ public class LogixDispatcher : CipDispatcher
 
         // Auto-register CIP instances when tags/templates are added
         tags.TagAdded += OnTagAdded;
-        tags.TemplateAdded += template => _templateObject.EnsureInstance(template);
+        tags.TemplateAdded += OnControllerTemplateAdded;
 
         _programObject.ProgramAdded += WireProgram;
 
@@ -104,6 +104,9 @@ public class LogixDispatcher : CipDispatcher
 
     private void WireProgram(ProgramDefinition program)
     {
+        foreach (var template in Tags.AllTemplates)
+            program.Tags.RegisterTemplate(template);
+
         program.Tags.TagAdded += tag => _symbolObject.EnsureInstance(tag);
         program.Tags.TemplateAdded += template => _templateObject.EnsureInstance(template);
 
@@ -112,6 +115,15 @@ public class LogixDispatcher : CipDispatcher
         foreach (var template in program.Tags.AllTemplates)
             _templateObject.EnsureInstance(template);
     }
+
+    private void OnControllerTemplateAdded(TemplateDefinition template)
+    {
+        _templateObject.EnsureInstance(template);
+
+        foreach (var program in _programObject.AllPrograms)
+            program.Tags.RegisterTemplate(template);
+    }
+
 
     private ITagDatabase? ResolveScope(string? symbolicName)
     {

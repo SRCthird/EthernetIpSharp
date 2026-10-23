@@ -132,6 +132,24 @@ public sealed class TagDatabase : ITagDatabase
         => AddTemplate(name, isString: false, members);
 
     /// <summary>
+    /// Make an existing controller-wide template visible to a program scope.
+    /// The same TemplateDefinition instance and template ID are retained.
+    /// </summary>
+    internal void RegisterTemplate(TemplateDefinition template)
+    {
+        if (_templates.TryGetValue(template.InstanceId, out var existing))
+        {
+            if (!ReferenceEquals(existing, template))
+                throw new InvalidOperationException(
+                    $"Template instance {template.InstanceId} is already registered.");
+            return;
+        }
+
+        _templates[template.InstanceId] = template;
+    }
+
+
+    /// <summary>
     /// Define a Logix STRING-family type with the controller's layout:
     /// LEN : DINT at offset 0, DATA : SINT[length] at offset 4.
     /// Clients present DATA as one string of <paramref name="length"/> characters.
