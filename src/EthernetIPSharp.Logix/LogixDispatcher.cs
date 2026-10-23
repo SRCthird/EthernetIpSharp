@@ -19,6 +19,8 @@ public class LogixDispatcher : CipDispatcher
     private readonly ControllerObject _controllerObject;
     private readonly ProgramObject _programObject;
 
+    public ProgramDefinition AddProgram(string name) => _programObject.AddProgram(name);
+
     /// <summary>Cache of tag references by symbolic name — avoids repeated dictionary lookup.</summary>
     private readonly ConcurrentDictionary<string, Tag> _symbolCache = new(StringComparer.OrdinalIgnoreCase);
 
@@ -32,10 +34,13 @@ public class LogixDispatcher : CipDispatcher
     public LogixDispatcher(ITagDatabase tags, IdentityInfo? identity)
     {
         Tags = tags;
-        _symbolObject = new SymbolObject(tags);
+        _programObject = new ProgramObject();
+        _symbolObject = new SymbolObject(
+            tags,
+            ResolveScope,
+            () => _programObject.AllPrograms);
         _templateObject = new TemplateObject(tags);
         _controllerObject = new ControllerObject(tags);
-        _programObject = new ProgramObject();
 
         RegisterClass(_symbolObject.CipClass);
         RegisterClass(_templateObject.CipClass);
@@ -91,8 +96,34 @@ public class LogixDispatcher : CipDispatcher
         tags.TagAdded += OnTagAdded;
         tags.TemplateAdded += template => _templateObject.EnsureInstance(template);
 
+        _programObject.ProgramAdded += WireProgram;
+
         // Sync any tags/templates that already exist in the database
         SyncCipInstances();
+    }
+
+    private void WireProgram(ProgramDefinition program)
+    {
+        program.Tags.TagAdded += tag => _symbolObject.EnsureInstance(tag);
+        program.Tags.TemplateAdded += template => _templateObject.EnsureInstance(template);
+
+        foreach (var tag in program.Tags.AllTags)
+            _symbolObject.EnsureInstance(tag);
+        foreach (var template in program.Tags.AllTemplates)
+            _templateObject.EnsureInstance(template);
+    }
+
+    private ITagDatabase? ResolveScope(string? symbolicName)
+    {
+        if (symbolicName == null)
+            return Tags;
+
+        int dot = symbolicName.IndexOf('.');
+        string root = dot < 0 ? symbolicName : symbolicName[..dot];
+        if (!root.StartsWith("PROGRAM:", StringComparison.OrdinalIgnoreCase))
+            return Tags;
+
+        return _programObject.FindByName(root["PROGRAM:".Length..])?.Tags;
     }
 
     private void OnTagAdded(Tag tag)
@@ -120,19 +151,61 @@ public class LogixDispatcher : CipDispatcher
         if (path.SymbolicName == null)
             return base.OnUnhandled(serviceCode, path, data, defaultStatus);
 
-        int dot = path.SymbolicName.IndexOf('.');
-        string rootName = dot < 0 ? path.SymbolicName : path.SymbolicName[..dot];
-        if (!_symbolCache.TryGetValue(rootName, out var tag))
+        var symbolicName = path.SymbolicName;
+        var dot = symbolicName.IndexOf('.');
+        var first = dot < 0 ? symbolicName : symbolicName[..dot];
+
+        if (first.StartsWith("PROGRAM:", StringComparison.OrdinalIgnoreCase))
         {
-            tag = Tags.FindByName(rootName);
+            var programName = first["PROGRAM:".Length..];
+            var program = _programObject.FindByName(programName);
+            if (program == null || dot < 0 || dot == symbolicName.Length - 1)
+                return CipServiceResponse.Error(serviceCode, CipStatus.Error(0x05));
+
+            return DispatchScopedTagService(
+                program.Tags,
+                symbolicName[(dot + 1)..],
+                serviceCode,
+                data,
+                path);
+        }
+
+        return DispatchScopedTagService(Tags, symbolicName, serviceCode, data, path);
+    }
+
+    private CipServiceResponse DispatchScopedTagService(
+        ITagDatabase database,
+        string symbolicName,
+        byte serviceCode,
+        ReadOnlyMemory<byte> data,
+        CipPath path)
+    {
+        int dot = symbolicName.IndexOf('.');
+        string rootName = dot < 0 ? symbolicName : symbolicName[..dot];
+        Tag? tag;
+
+        if (ReferenceEquals(database, Tags) && _symbolCache.TryGetValue(rootName, out var cached))
+        {
+            tag = cached;
+        }
+        else
+        {
+            tag = database.FindByName(rootName);
             if (tag == null)
                 return CipServiceResponse.Error(serviceCode, CipStatus.Error(0x05));
-            _symbolCache[rootName] = tag;
+            if (ReferenceEquals(database, Tags))
+                _symbolCache[rootName] = tag;
         }
 
         if (dot < 0)
             return DispatchTagService(tag, serviceCode, data, path);
-        if (!TryResolveMember(tag, path.SymbolicName[(dot + 1)..], path, out var value))
+
+        if (!TryResolveMember(
+                database,
+                tag,
+                symbolicName[(dot + 1)..],
+                path,
+                out var value))
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(0x05));
 
         return serviceCode switch
@@ -147,14 +220,18 @@ public class LogixDispatcher : CipDispatcher
     }
 
     private bool TryResolveMember(
-        Tag tag, string memberPath, CipPath path, out LogixValue value)
+        ITagDatabase database,
+        Tag tag,
+        string memberPath,
+        CipPath path,
+        out LogixValue value)
     {
         value = null!;
 
         if (!LogixDataTypes.IsStruct(tag.SymbolType))
             return false;
 
-        var template = Tags.FindTemplate(LogixDataTypes.GetTemplateId(tag.SymbolType));
+        var template = database.FindTemplate(LogixDataTypes.GetTemplateId(tag.SymbolType));
         if (template == null)
             return false;
 
