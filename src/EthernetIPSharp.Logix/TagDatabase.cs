@@ -91,6 +91,9 @@ public sealed class TagDatabase : ITagDatabase
     /// <summary>Find a tag by name (case-insensitive). Supports dotted names for top-level lookup.</summary>
     public Tag? FindByName(string name)
     {
+        if (_byName.TryGetValue(name, out var exactTag))
+            return exactTag;
+
         // For dotted paths like "MyStruct.member", look up the root tag
         int dotIndex = name.IndexOf('.');
         string rootName = dotIndex >= 0 ? name[..dotIndex] : name;

@@ -192,6 +192,22 @@ public class LogixDispatcher : CipDispatcher
         ReadOnlyMemory<byte> data,
         CipPath path)
     {
+        if (ReferenceEquals(database, Tags) &&
+            _symbolCache.TryGetValue(symbolicName, out var exactCached))
+        {
+            return DispatchTagService(exactCached, serviceCode, data, path);
+        }
+
+        var exactTag = database.FindByName(symbolicName);
+        if (exactTag != null &&
+            string.Equals(exactTag.Name, symbolicName, StringComparison.OrdinalIgnoreCase))
+        {
+            if (ReferenceEquals(database, Tags))
+                _symbolCache[symbolicName] = exactTag;
+
+            return DispatchTagService(exactTag, serviceCode, data, path);
+        }
+
         int dot = symbolicName.IndexOf('.');
         string rootName = dot < 0 ? symbolicName : symbolicName[..dot];
         Tag? tag;
