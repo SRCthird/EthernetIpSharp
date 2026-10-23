@@ -10,12 +10,17 @@ public sealed class TagDatabase : ITagDatabase
 {
     private readonly ConcurrentDictionary<string, Tag> _byName = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<uint, Tag> _byInstanceId = new();
-    private uint _nextInstanceId = 1;
+    private uint _nextInstanceId;
     private uint _structureVersion;
 
     /// <inheritdoc />
     public uint StructureVersion => Volatile.Read(ref _structureVersion);
 
+    public TagDatabase(uint firstInstanceId = 1, int firstTemplateId = 0x100)
+    {
+        _nextInstanceId = firstInstanceId;
+        _nextTemplateId = firstTemplateId;
+    }
 
     /// <summary>Fires when any tag's data changes (from any source).</summary>
     public event Action<Tag, TagChangeInfo>? AnyTagChanged;
@@ -105,7 +110,7 @@ public sealed class TagDatabase : ITagDatabase
     // --- Template management ---
 
     private readonly ConcurrentDictionary<ushort, TemplateDefinition> _templates = new();
-    private int _nextTemplateId = 0x100; // Start above atomic range
+    private int _nextTemplateId;
 
     /// <summary>
     /// Define a structure template (UDT) with proper Logix alignment and BOOL packing.
