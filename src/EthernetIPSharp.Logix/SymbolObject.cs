@@ -1,5 +1,9 @@
-using System.Buffers.Binary;
 using EthernetIPSharp.Cip;
+using System;
+using System.Buffers.Binary;
+using System.IO;
+using System.Xml.Linq;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace EthernetIPSharp.Logix;
 
@@ -18,6 +22,9 @@ public sealed class SymbolObject
     public const byte GetInstanceAttributeList = 0x55;
 
     private readonly ITagDatabase _tags;
+    private readonly Func<string?, ITagDatabase?> _scopeResolver;
+    private readonly Func<IEnumerable<ProgramDefinition>> _programs;
+
 
     /// <summary>The CIP class object for registration in the dispatcher.</summary>
     public CipClass CipClass { get; }
@@ -26,9 +33,15 @@ public sealed class SymbolObject
     /// Create the Symbol Object CIP class with Read/Write Tag instance services
     /// and Get_Instance_Attribute_List class service for tag browsing.
     /// </summary>
-    public SymbolObject(ITagDatabase tags)
+    public SymbolObject(
+        ITagDatabase tags,
+        Func<string?, ITagDatabase?> scopeResolver,
+        Func<IEnumerable<ProgramDefinition>> programs)
     {
         _tags = tags;
+        _scopeResolver = scopeResolver;
+        _programs = programs;
+
         CipClass = new CipClass(ClassCode, "Symbol", revision: 1);
 
         // Instance-level services: Read/Write Tag (routed via Symbol Instance addressing)
@@ -82,14 +95,18 @@ public sealed class SymbolObject
     }
 
     /// <summary>Resolve a Tag from a CIP instance — tries UserData first, falls back to database lookup.</summary>
-    private Tag? GetTagFromInstance(CipInstance instance) =>
-        instance.UserData as Tag ?? _tags.FindByInstanceId(instance.InstanceId);
+    private Tag? GetTagFromInstance(CipInstance instance, CipPath path)
+    {
+        var scope = _scopeResolver(path.SymbolicName);
+        return scope?.FindByInstanceId(instance.InstanceId);
+    }
+
 
     // --- Instance service handlers ---
 
     private CipServiceResponse HandleInstanceReadTag(CipInstance instance, CipServiceRequest request)
     {
-        var tag = GetTagFromInstance(instance);
+        var tag = GetTagFromInstance(instance, request.Path);
         if (tag == null) return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x05));
         int elementOffset = (int)(request.Path.ElementId ?? 0);
         return TagServices.HandleReadTag(tag, request.ServiceCode, request.Data, elementOffset);
@@ -97,7 +114,7 @@ public sealed class SymbolObject
 
     private CipServiceResponse HandleInstanceWriteTag(CipInstance instance, CipServiceRequest request)
     {
-        var tag = GetTagFromInstance(instance);
+        var tag = GetTagFromInstance(instance, request.Path);
         if (tag == null) return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x05));
         int elementOffset = (int)(request.Path.ElementId ?? 0);
         return TagServices.HandleWriteTag(tag, request.ServiceCode, request.Data, elementOffset);
@@ -106,7 +123,7 @@ public sealed class SymbolObject
     private CipServiceResponse HandleInstanceReadTagFragmented(CipInstance instance, CipServiceRequest request)
     {
         int elementOffset = (int)(request.Path.ElementId ?? 0);
-        var tag = GetTagFromInstance(instance);
+        var tag = GetTagFromInstance(instance, request.Path);
         if (tag == null) return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x05));
         return TagServices.HandleReadTagFragmented(tag, request.ServiceCode, request.Data, elementOffset);
     }
@@ -114,14 +131,14 @@ public sealed class SymbolObject
     private CipServiceResponse HandleInstanceWriteTagFragmented(CipInstance instance, CipServiceRequest request)
     {
         int elementOffset = (int)(request.Path.ElementId ?? 0);
-        var tag = GetTagFromInstance(instance);
+        var tag = GetTagFromInstance(instance, request.Path);
         if (tag == null) return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x05));
         return TagServices.HandleWriteTagFragmented(tag, request.ServiceCode, request.Data, elementOffset);
     }
 
     private CipServiceResponse HandleInstanceReadModifyWrite(CipInstance instance, CipServiceRequest request)
     {
-        var tag = GetTagFromInstance(instance);
+        var tag = GetTagFromInstance(instance, request.Path);
         if (tag == null) return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x05));
         return TagServices.HandleReadModifyWrite(tag, request.ServiceCode, request.Data);
     }
@@ -149,14 +166,27 @@ public sealed class SymbolObject
         for (int i = 0; i < attrCount; i++)
             requestedAttrs[i] = BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(2 + i * 2));
 
-        // Starting instance from the request path
-        uint startInstance = request.Path.InstanceId ?? 0;
-
-        // Get all tags sorted by instance ID, starting after startInstance
-        var tags = _tags.AllTags
+        var startInstance = request.Path.InstanceId ?? 0;
+        var scope = _scopeResolver(request.Path.SymbolicName);
+        if (scope == null)
+            return CipServiceResponse.Error(request.ServiceCode, CipStatus.Error(0x05));
+        
+        var tags = scope.AllTags
             .Where(t => t.InstanceId > startInstance)
             .OrderBy(t => t.InstanceId)
             .ToList();
+
+        if (request.Path.SymbolicName == null)
+        {
+            foreach (var program in _programs())
+            {
+                if (program.InstanceId > startInstance)
+                    tags.Add(CreateProgramSymbol(program));
+            }
+
+            tags.Sort((left, right) => left.InstanceId.CompareTo(right.InstanceId));
+        }
+
 
         // Ensure all tags have CIP instances
         foreach (var tag in tags)
@@ -259,4 +289,12 @@ public sealed class SymbolObject
 
         return CipServiceResponse.Success(request.ServiceCode, buffer.AsMemory(0, offset));
     }
+    
+    private static Tag CreateProgramSymbol(ProgramDefinition program) => new(
+        instanceId: program.InstanceId,
+        name: $"Program:{program.Name}",
+        symbolType: LogixDataTypes.DINT,
+        tagType: LogixDataTypes.DINT,
+        elementSize: LogixDataTypes.GetElementSize(LogixDataTypes.DINT));
+
 }
