@@ -37,12 +37,17 @@ mainProgram.Tags.AddTag("MOTOR", motorStatusTemplate);
 
 // Add test tags
 logix.Tags.AddTag("BOOL", LogixDataTypes.BOOL);
-logix.Tags.AddTag("DINT", LogixDataTypes.DINT);
-logix.Tags.AddTag("INT", LogixDataTypes.INT);
-logix.Tags.AddTag("LINT", LogixDataTypes.LINT);
-logix.Tags.AddTag("LREAL", LogixDataTypes.LREAL);
-logix.Tags.AddTag("REAL", LogixDataTypes.REAL);
 logix.Tags.AddTag("SINT", LogixDataTypes.SINT);
+logix.Tags.AddTag("INT", LogixDataTypes.INT);
+logix.Tags.AddTag("DINT", LogixDataTypes.DINT);
+logix.Tags.AddTag("LINT", LogixDataTypes.LINT);
+logix.Tags.AddTag("USINT", LogixDataTypes.USINT);
+logix.Tags.AddTag("UINT", LogixDataTypes.UINT);
+logix.Tags.AddTag("UDINT", LogixDataTypes.UDINT);
+logix.Tags.AddTag("ULINT", LogixDataTypes.ULINT);
+logix.Tags.AddTag("REAL", LogixDataTypes.REAL);
+logix.Tags.AddTag("LREAL", LogixDataTypes.LREAL);
+logix.Tags.AddTag("DWORD", LogixDataTypes.DWORD);
 logix.Tags.AddTag("STRING", stringTemplate);
 
 var adapter = new EipAdapter(logix, identity);
