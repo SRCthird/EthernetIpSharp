@@ -19,8 +19,8 @@ var identity = new IdentityInfo
 
 var logix = new LogixDispatcher(new TagDatabase(), identity);
 
+// Add templates
 var stringTemplate = logix.Tags.AddStringType("STRING;82", 82);
-
 var motorStatusTemplate = logix.Tags.AddTemplate(
     "MotorStatus",
     new TemplateMember("Running", LogixDataTypes.BOOL),
@@ -30,16 +30,20 @@ var motorStatusTemplate = logix.Tags.AddTemplate(
     new TemplateMember("Temps", LogixDataTypes.REAL, arraySize: 4)
 );
 
+// Add program
+var mainProgram = logix.AddProgram("MAINPROGRAM");
+mainProgram.Tags.AddTag("DINT", LogixDataTypes.DINT, elementCount: 4);
+mainProgram.Tags.AddTag("MOTOR", motorStatusTemplate);
+
 // Add test tags
 logix.Tags.AddTag("BOOL", LogixDataTypes.BOOL);
-logix.Tags.AddTag("DINT", LogixDataTypes.DINT, elementCount: 4);
+logix.Tags.AddTag("DINT", LogixDataTypes.DINT);
 logix.Tags.AddTag("INT", LogixDataTypes.INT);
 logix.Tags.AddTag("LINT", LogixDataTypes.LINT);
 logix.Tags.AddTag("LREAL", LogixDataTypes.LREAL);
 logix.Tags.AddTag("REAL", LogixDataTypes.REAL);
 logix.Tags.AddTag("SINT", LogixDataTypes.SINT);
 logix.Tags.AddTag("STRING", stringTemplate);
-logix.Tags.AddTag("MOTOR", motorStatusTemplate);
 
 var adapter = new EipAdapter(logix, identity);
 await adapter.ListenAsync(IPAddress.Parse("0.0.0.0"), 44818);
