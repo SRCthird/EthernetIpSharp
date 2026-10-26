@@ -745,9 +745,6 @@ public sealed class TagClient : IAsyncDisposable
 
         // Step 2: Template Read (0x4C) — get member info + names
         // Read size = (definitionSize * 4) - 23
-        int readSize = (int)(definitionSize * 4) - 23;
-        if (readSize <= 0) readSize = 256;
-
         var members = new List<TemplateMemberDetail>();
         string templateName = "";
 
@@ -755,20 +752,47 @@ public sealed class TagClient : IAsyncDisposable
         var allDefData = new List<byte>();
         uint readOffset = 0;
 
+        const ushort templateChunkSize = 480;
+
         while (true)
         {
             var readReqData = new byte[6];
-            BinaryPrimitives.WriteUInt32LittleEndian(readReqData, readOffset);
-            int remaining = readSize - (int)readOffset;
-            BinaryPrimitives.WriteUInt16LittleEndian(readReqData.AsSpan(4), (ushort)Math.Min(remaining, ushort.MaxValue));
 
-            var (readStatus, readData) = await SendCipWithStatusAsync(0x4C, attrPath, readReqData, ct);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                readReqData.AsSpan(0, 4),
+                readOffset);
 
-            if (readStatus != 0x00 && readStatus != 0x06) break;
+            BinaryPrimitives.WriteUInt16LittleEndian(
+                readReqData.AsSpan(4, 2),
+                templateChunkSize);
+
+            var (readStatus, readData) =
+                await SendCipWithStatusAsync(
+                    0x4C,
+                    attrPath,
+                    readReqData,
+                    ct);
+
+            if (readStatus != 0x00 && readStatus != 0x06)
+            {
+                throw new InvalidOperationException(
+                    $"Template read failed: status=0x{readStatus:X2}");
+            }
+
+            if (readData.Length == 0)
+            {
+                throw new InvalidOperationException(
+                    $"Template read returned status 0x{readStatus:X2} " +
+                    "with no data; refusing to retry indefinitely.");
+            }
+
             allDefData.AddRange(readData);
             readOffset += (uint)readData.Length;
 
-            if (readStatus == 0x00) break;
+            if (readStatus == 0x00)
+            {
+                break;
+            }
         }
 
         var defBytes = allDefData.ToArray();
