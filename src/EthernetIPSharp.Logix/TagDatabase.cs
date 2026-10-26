@@ -91,6 +91,9 @@ public sealed class TagDatabase : ITagDatabase
     /// <summary>Find a tag by name (case-insensitive). Supports dotted names for top-level lookup.</summary>
     public Tag? FindByName(string name)
     {
+        if (_byName.TryGetValue(name, out var exactTag))
+            return exactTag;
+
         // For dotted paths like "MyStruct.member", look up the root tag
         int dotIndex = name.IndexOf('.');
         string rootName = dotIndex >= 0 ? name[..dotIndex] : name;
@@ -204,7 +207,10 @@ public sealed class TagDatabase : ITagDatabase
                 boolBitPos = 0;
                 boolHostOffset = -1;
 
-                int elemSize = LogixDataTypes.GetElementSize(m.DataType);
+                int elemSize = m.NestedTemplate != null
+                    ? checked((int)m.NestedTemplate.StructureSize)
+                    : LogixDataTypes.GetElementSize(m.DataType);
+
                 if (elemSize <= 0) elemSize = 4; // Default for unknown/struct types
 
                 // Alignment based on data type
@@ -213,7 +219,7 @@ public sealed class TagDatabase : ITagDatabase
 
                 int memberSize = m.ArraySize > 0 ? elemSize * m.ArraySize : elemSize;
 
-                resolvedMembers.Add(new TemplateMemberInfo(m.Name, m.DataType, offset, m.ArraySize, elemSize));
+                resolvedMembers.Add(new TemplateMemberInfo(m.Name, m.DataType, offset, m.ArraySize, elemSize, m.NestedTemplate));
                 offset += memberSize;
             }
         }
@@ -290,10 +296,22 @@ public readonly struct TemplateMember
     /// <summary>Array size (0 for scalar members).</summary>
     public int ArraySize { get; }
 
+    public TemplateDefinition? NestedTemplate { get; }
+
     public TemplateMember(string name, ushort dataType, int arraySize = 0)
     {
         Name = name;
         DataType = dataType;
+        NestedTemplate = null;
+        ArraySize = arraySize;
+    }
+
+    public TemplateMember(string name, TemplateDefinition template, int arraySize = 0)
+    {
+        ArgumentNullException.ThrowIfNull(template);
+        Name = name;
+        DataType = template.StructureHandle;
+        NestedTemplate = template;
         ArraySize = arraySize;
     }
 }
@@ -319,13 +337,17 @@ public readonly struct TemplateMemberInfo
     /// <summary>Size of one element in bytes.</summary>
     public int ElementSize { get; }
 
-    public TemplateMemberInfo(string name, ushort dataType, int offset, int arraySize, int elementSize)
+    public TemplateDefinition? NestedTemplate { get; }
+
+    public TemplateMemberInfo(string name, ushort dataType, int offset, int arraySize,
+        int elementSize, TemplateDefinition? nestedTemplate = null)
     {
         Name = name;
         DataType = dataType;
         Offset = offset;
         ArraySize = arraySize;
         ElementSize = elementSize;
+        NestedTemplate = nestedTemplate;
     }
 }
 

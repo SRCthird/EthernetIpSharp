@@ -21,13 +21,23 @@ var logix = new LogixDispatcher(new TagDatabase(), identity);
 
 // Add templates
 var stringTemplate = logix.Tags.AddStringType("STRING;82", 82);
+var heaterTemplate = logix.Tags.AddTemplate(
+    "Heater",
+    new TemplateMember("Heating", LogixDataTypes.BOOL),
+    new TemplateMember("Setpoint", LogixDataTypes.REAL),
+    new TemplateMember("Temps", LogixDataTypes.REAL, arraySize: 3),
+    new TemplateMember("Avg", LogixDataTypes.REAL),
+    new TemplateMember("Codes", stringTemplate, arraySize: 3)
+);
+
 var motorStatusTemplate = logix.Tags.AddTemplate(
     "MotorStatus",
     new TemplateMember("Running", LogixDataTypes.BOOL),
     new TemplateMember("Faulted", LogixDataTypes.BOOL),
     new TemplateMember("Speed", LogixDataTypes.REAL),
     new TemplateMember("CycleCount", LogixDataTypes.DINT),
-    new TemplateMember("Temps", LogixDataTypes.REAL, arraySize: 4)
+    new TemplateMember("heaters", heaterTemplate, arraySize: 4),
+    new TemplateMember("Asset", stringTemplate)
 );
 
 // Add program

@@ -12,7 +12,7 @@ public interface ITagDatabase
     /// <summary>Add a structured tag backed by a template definition.</summary>
     Tag AddTag(string name, TemplateDefinition template, int elementCount = 1);
 
-    /// <summary>Find a tag by name (case-insensitive). For dotted names, looks up the root tag.</summary>
+    /// <summary>Find a tag by name (case-insensitive).</summary>
     Tag? FindByName(string name);
 
     /// <summary>Find a tag by its Symbol Object instance ID.</summary>

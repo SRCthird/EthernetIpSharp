@@ -39,6 +39,11 @@ public sealed class TemplateObject
     public void EnsureInstance(TemplateDefinition template)
     {
         if (CipClass.GetInstance(template.InstanceId) != null) return;
+        foreach (var member in template.Members)
+        {
+            if (member.NestedTemplate != null)
+                EnsureInstance(member.NestedTemplate);
+        }
 
         var inst = CipClass.CreateInstance(template.InstanceId);
         inst.UserData = template;

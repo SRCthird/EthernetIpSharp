@@ -192,6 +192,22 @@ public class LogixDispatcher : CipDispatcher
         ReadOnlyMemory<byte> data,
         CipPath path)
     {
+        if (ReferenceEquals(database, Tags) &&
+            _symbolCache.TryGetValue(symbolicName, out var exactCached))
+        {
+            return DispatchTagService(exactCached, serviceCode, data, path);
+        }
+
+        var exactTag = database.FindByName(symbolicName);
+        if (exactTag != null &&
+            string.Equals(exactTag.Name, symbolicName, StringComparison.OrdinalIgnoreCase))
+        {
+            if (ReferenceEquals(database, Tags))
+                _symbolCache[symbolicName] = exactTag;
+
+            return DispatchTagService(exactTag, serviceCode, data, path);
+        }
+
         int dot = symbolicName.IndexOf('.');
         string rootName = dot < 0 ? symbolicName : symbolicName[..dot];
         Tag? tag;
@@ -247,11 +263,9 @@ public class LogixDispatcher : CipDispatcher
         if (template == null)
             return false;
 
-        // This server exposes the direct atomic UDT members used by Kepware.
-        // Nested structures require their own template traversal and are not
-        // silently treated as atomic values.
         if (memberPath.Contains('.'))
-            return false;
+            return TryResolveNestedMember(tag, template, memberPath, path, out value);
+
 
         var member = template.Members.FirstOrDefault(
             m => string.Equals(m.Name, memberPath, StringComparison.OrdinalIgnoreCase));
@@ -293,6 +307,93 @@ public class LogixDispatcher : CipDispatcher
         // index is already embedded in resolved.MemberOffset/base offset.
         value = new LogixValue(tag, member, rootIndex, memberIndex);
 
+        return true;
+    }
+
+    private static bool TryResolveNestedMember(
+        Tag tag,
+        TemplateDefinition rootTemplate,
+        string memberPath,
+        CipPath path,
+        out LogixValue value)
+    {
+        value = null!;
+        var parts = memberPath.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 2) return false;
+
+        var elementIds = path.ElementIds ?? Array.Empty<uint>();
+        int elementCursor = 0;
+        int rootIndex = 0;
+
+        if (tag.ElementCount > 1)
+        {
+            if (elementCursor >= elementIds.Count || elementIds[elementCursor] > int.MaxValue)
+                return false;
+            rootIndex = (int)elementIds[elementCursor++];
+        }
+
+        int relativeOffset = 0;
+        var current = rootTemplate;
+        TemplateMemberInfo leaf = default;
+        bool leafElementSelected = false;
+        int leafElementIndex = 0;
+
+        for (int partIndex = 0; partIndex < parts.Length; partIndex++)
+        {
+            bool isLast = partIndex == parts.Length - 1;
+            var member = current.Members.FirstOrDefault(
+                m => string.Equals(m.Name, parts[partIndex], StringComparison.OrdinalIgnoreCase));
+            if (string.IsNullOrEmpty(member.Name)) return false;
+
+            int memberCount = member.DataType == LogixDataTypes.BOOL
+                ? 1
+                : Math.Max(1, member.ArraySize);
+            int memberIndex = 0;
+
+            // A nested array must be indexed before descending. A leaf array
+            // may be read as a whole, or indexed when an element segment is
+            // present in the path.
+            if (memberCount > 1 && (!isLast || elementCursor < elementIds.Count))
+            {
+                if (elementCursor >= elementIds.Count || elementIds[elementCursor] > int.MaxValue)
+                    return false;
+                memberIndex = (int)elementIds[elementCursor++];
+                if (memberIndex >= memberCount) return false;
+                leafElementSelected = isLast;
+                if (isLast)
+                {
+                    leafElementSelected = true;
+                    leafElementIndex = memberIndex;
+                }
+
+            }
+
+            relativeOffset = checked(relativeOffset + member.Offset
+                + memberIndex * member.ElementSize);
+
+            if (isLast)
+            {
+                leaf = member;
+                break;
+            }
+
+            if (member.NestedTemplate == null) return false;
+            current = member.NestedTemplate;
+        }
+
+        if (elementCursor != elementIds.Count || leaf.NestedTemplate != null)
+            return false;
+        if (LogixDataTypes.GetElementSize(leaf.DataType) <= 0)
+            return false;
+        if (rootIndex < 0 || rootIndex >= tag.ElementCount)
+            return false;
+
+        int arraySize = leaf.DataType == LogixDataTypes.BOOL
+            ? leaf.ArraySize
+            : (leafElementSelected ? leaf.ArraySize - leafElementIndex : leaf.ArraySize);
+        var resolved = new TemplateMemberInfo(
+            leaf.Name, leaf.DataType, relativeOffset, arraySize, leaf.ElementSize);
+        value = new LogixValue(tag, resolved, rootIndex);
         return true;
     }
 
