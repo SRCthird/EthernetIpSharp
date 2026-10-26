@@ -257,18 +257,36 @@ public sealed class TagClient : IAsyncDisposable
     /// Returns a StructureValue with named member access.
     /// The template must have been obtained from BrowseTagsAsync or ReadTemplateAsync.
     /// </summary>
-    public async Task<StructureValue> ReadStructAsync(string tagName, TemplateInfo template, CancellationToken ct = default)
+    public async Task<StructureValue> ReadStructAsync(
+        string tagName,
+        TemplateInfo template,
+        CancellationToken ct = default)
     {
-        var structData = await ReadStructBytesAsync(tagName, ct);
+        var structData =
+            await ReadStructBytesAsync(
+                tagName,
+                template.StructureHandle,
+                template.StructureSize,
+                ct);
+
         return new StructureValue(template, structData);
     }
 
     /// <summary>Read a structure tag directly into a generated IUdtStructure type.</summary>
-    public async Task<T> ReadStructAsync<T>(string tagName, CancellationToken ct = default)
+    public async Task<T> ReadStructAsync<T>(
+        string tagName,
+        CancellationToken ct = default)
         where T : IUdtStructure, new()
     {
-        var structData = await ReadStructBytesAsync(tagName, ct);
         var result = new T();
+
+        var structData =
+            await ReadStructBytesAsync(
+                tagName,
+                result.StructureHandle,
+                null,
+                ct);
+
         result.FromBytes(structData);
         return result;
     }
@@ -280,33 +298,143 @@ public sealed class TagClient : IAsyncDisposable
     /// any size. First fragment carries tag_type(2)+struct_handle(2);
     /// subsequent fragments carry just tag_type(2).
     /// </summary>
-    private async Task<byte[]> ReadStructBytesAsync(string tagName, CancellationToken ct)
+    private async Task<byte[]> ReadStructBytesAsync(
+        string tagName,
+        ushort? expectedStructureHandle,
+        uint? expectedStructureSize,
+        CancellationToken ct)
     {
         var path = BuildTagPath(tagName);
-        var acc = new List<byte>();
+
+        var accumulated = new List<byte>();
+
         uint byteOffset = 0;
         bool first = true;
 
         while (true)
         {
-            var req = new byte[6];
-            BinaryPrimitives.WriteUInt16LittleEndian(req.AsSpan(0, 2), 1); // element_count
-            BinaryPrimitives.WriteUInt32LittleEndian(req.AsSpan(2, 4), byteOffset);
+            var request = new byte[6];
 
-            var (status, data) = await SendCipWithStatusAsync(TagServices.ReadTagFragmented, path, req, ct);
+            BinaryPrimitives.WriteUInt16LittleEndian(
+                request.AsSpan(0, 2),
+                1);
+
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                request.AsSpan(2, 4),
+                byteOffset);
+
+            var (status, response) =
+                await SendCipWithStatusAsync(
+                    TagServices.ReadTagFragmented,
+                    path,
+                    request,
+                    ct);
+
             if (status != 0x00 && status != 0x06)
-                throw new InvalidOperationException($"ReadStructBytesAsync: CIP status 0x{status:X2}");
+            {
+                throw new InvalidOperationException(
+                    $"ReadStructBytesAsync: CIP status 0x{status:X2}");
+            }
 
-            int headerSize = first ? 4 : 2;
-            if (data.Length <= headerSize) break;
-            int added = data.Length - headerSize;
-            acc.AddRange(data.AsSpan(headerSize).ToArray());
-            byteOffset += (uint)added;
+            if (response.Length < 2)
+            {
+                throw new InvalidOperationException(
+                    "ReadStructBytesAsync: response has no type prefix.");
+            }
+
+            ushort structureIndicator =
+                BinaryPrimitives.ReadUInt16LittleEndian(
+                    response.AsSpan(0, 2));
+
+            if (structureIndicator != 0x02A0)
+            {
+                throw new InvalidOperationException(
+                    $"ReadStructBytesAsync: unexpected structure type " +
+                    $"0x{structureIndicator:X4}.");
+            }
+
+            int headerSize;
+
+            if (first)
+            {
+                if (response.Length < 4)
+                {
+                    throw new InvalidOperationException(
+                        "ReadStructBytesAsync: first fragment is too short.");
+                }
+
+                if (expectedStructureHandle.HasValue)
+                {
+                    ushort actualHandle =
+                        BinaryPrimitives.ReadUInt16LittleEndian(
+                            response.AsSpan(2, 2));
+
+                    if (actualHandle != expectedStructureHandle.Value)
+                    {
+                        throw new InvalidOperationException(
+                            $"ReadStructBytesAsync: expected structure handle " +
+                            $"0x{expectedStructureHandle.Value:X4}, " +
+                            $"received 0x{actualHandle:X4}.");
+                    }
+                }
+
+                headerSize = 4;
+            }
+            else
+            {
+                headerSize = 2;
+
+                // Compatibility with older simulator builds that repeated
+                // the complete 4-byte structure header on every fragment.
+                if (expectedStructureHandle.HasValue &&
+                    response.Length >= 4)
+                {
+                    ushort possibleHandle =
+                        BinaryPrimitives.ReadUInt16LittleEndian(
+                            response.AsSpan(2, 2));
+
+                    if (possibleHandle == expectedStructureHandle.Value)
+                    {
+                        headerSize = 4;
+                    }
+                }
+            }
+
+            if (response.Length > headerSize)
+            {
+                int payloadLength =
+                    response.Length - headerSize;
+
+                accumulated.AddRange(
+                    response.AsSpan(headerSize, payloadLength).ToArray());
+
+                byteOffset += (uint)payloadLength;
+            }
+
             first = false;
 
-            if (status == 0x00) break;
+            if (expectedStructureSize.HasValue &&
+                accumulated.Count >= expectedStructureSize.Value)
+            {
+                break;
+            }
+
+            if (status == 0x00)
+            {
+                break;
+            }
         }
-        return acc.ToArray();
+
+        if (expectedStructureSize.HasValue &&
+            accumulated.Count != expectedStructureSize.Value)
+        {
+            throw new InvalidOperationException(
+                $"ReadStructBytesAsync: expected " +
+                $"{expectedStructureSize.Value} structure bytes, " +
+                $"received {accumulated.Count}.");
+        }
+
+        return accumulated.ToArray();
     }
 
     /// <summary>Write a StructureValue to a tag.</summary>
