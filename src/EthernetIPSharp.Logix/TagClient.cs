@@ -653,12 +653,14 @@ public sealed class TagClient : IAsyncDisposable
         while (true)
         {
             // Path: [optional program prefix] + Class 0x6B + Instance (16-bit)
-            var classInstPath = new byte[6];
-            classInstPath[0] = 0x20; classInstPath[1] = 0x6B;
-            classInstPath[2] = 0x25; classInstPath[3] = 0x00;
-            BinaryPrimitives.WriteUInt16LittleEndian(classInstPath.AsSpan(4), (ushort)startInstance);
+            var classInstPath = new List<byte>
+            {
+                0x20, 0x6B
+            };
 
-            var path = new byte[programPrefix.Length + classInstPath.Length];
+            EmitLogicalInstance(classInstPath, startInstance);
+
+            var path = new byte[programPrefix.Length + classInstPath.Count];
             programPrefix.CopyTo(path, 0);
             classInstPath.CopyTo(path, programPrefix.Length);
 
