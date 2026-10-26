@@ -257,18 +257,36 @@ public sealed class TagClient : IAsyncDisposable
     /// Returns a StructureValue with named member access.
     /// The template must have been obtained from BrowseTagsAsync or ReadTemplateAsync.
     /// </summary>
-    public async Task<StructureValue> ReadStructAsync(string tagName, TemplateInfo template, CancellationToken ct = default)
+    public async Task<StructureValue> ReadStructAsync(
+        string tagName,
+        TemplateInfo template,
+        CancellationToken ct = default)
     {
-        var structData = await ReadStructBytesAsync(tagName, ct);
+        var structData =
+            await ReadStructBytesAsync(
+                tagName,
+                template.StructureHandle,
+                template.StructureSize,
+                ct);
+
         return new StructureValue(template, structData);
     }
 
     /// <summary>Read a structure tag directly into a generated IUdtStructure type.</summary>
-    public async Task<T> ReadStructAsync<T>(string tagName, CancellationToken ct = default)
+    public async Task<T> ReadStructAsync<T>(
+        string tagName,
+        CancellationToken ct = default)
         where T : IUdtStructure, new()
     {
-        var structData = await ReadStructBytesAsync(tagName, ct);
         var result = new T();
+
+        var structData =
+            await ReadStructBytesAsync(
+                tagName,
+                result.StructureHandle,
+                null,
+                ct);
+
         result.FromBytes(structData);
         return result;
     }
@@ -280,33 +298,143 @@ public sealed class TagClient : IAsyncDisposable
     /// any size. First fragment carries tag_type(2)+struct_handle(2);
     /// subsequent fragments carry just tag_type(2).
     /// </summary>
-    private async Task<byte[]> ReadStructBytesAsync(string tagName, CancellationToken ct)
+    private async Task<byte[]> ReadStructBytesAsync(
+        string tagName,
+        ushort? expectedStructureHandle,
+        uint? expectedStructureSize,
+        CancellationToken ct)
     {
         var path = BuildTagPath(tagName);
-        var acc = new List<byte>();
+
+        var accumulated = new List<byte>();
+
         uint byteOffset = 0;
         bool first = true;
 
         while (true)
         {
-            var req = new byte[6];
-            BinaryPrimitives.WriteUInt16LittleEndian(req.AsSpan(0, 2), 1); // element_count
-            BinaryPrimitives.WriteUInt32LittleEndian(req.AsSpan(2, 4), byteOffset);
+            var request = new byte[6];
 
-            var (status, data) = await SendCipWithStatusAsync(TagServices.ReadTagFragmented, path, req, ct);
+            BinaryPrimitives.WriteUInt16LittleEndian(
+                request.AsSpan(0, 2),
+                1);
+
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                request.AsSpan(2, 4),
+                byteOffset);
+
+            var (status, response) =
+                await SendCipWithStatusAsync(
+                    TagServices.ReadTagFragmented,
+                    path,
+                    request,
+                    ct);
+
             if (status != 0x00 && status != 0x06)
-                throw new InvalidOperationException($"ReadStructBytesAsync: CIP status 0x{status:X2}");
+            {
+                throw new InvalidOperationException(
+                    $"ReadStructBytesAsync: CIP status 0x{status:X2}");
+            }
 
-            int headerSize = first ? 4 : 2;
-            if (data.Length <= headerSize) break;
-            int added = data.Length - headerSize;
-            acc.AddRange(data.AsSpan(headerSize).ToArray());
-            byteOffset += (uint)added;
+            if (response.Length < 2)
+            {
+                throw new InvalidOperationException(
+                    "ReadStructBytesAsync: response has no type prefix.");
+            }
+
+            ushort structureIndicator =
+                BinaryPrimitives.ReadUInt16LittleEndian(
+                    response.AsSpan(0, 2));
+
+            if (structureIndicator != 0x02A0)
+            {
+                throw new InvalidOperationException(
+                    $"ReadStructBytesAsync: unexpected structure type " +
+                    $"0x{structureIndicator:X4}.");
+            }
+
+            int headerSize;
+
+            if (first)
+            {
+                if (response.Length < 4)
+                {
+                    throw new InvalidOperationException(
+                        "ReadStructBytesAsync: first fragment is too short.");
+                }
+
+                if (expectedStructureHandle.HasValue)
+                {
+                    ushort actualHandle =
+                        BinaryPrimitives.ReadUInt16LittleEndian(
+                            response.AsSpan(2, 2));
+
+                    if (actualHandle != expectedStructureHandle.Value)
+                    {
+                        throw new InvalidOperationException(
+                            $"ReadStructBytesAsync: expected structure handle " +
+                            $"0x{expectedStructureHandle.Value:X4}, " +
+                            $"received 0x{actualHandle:X4}.");
+                    }
+                }
+
+                headerSize = 4;
+            }
+            else
+            {
+                headerSize = 2;
+
+                // Compatibility with older simulator builds that repeated
+                // the complete 4-byte structure header on every fragment.
+                if (expectedStructureHandle.HasValue &&
+                    response.Length >= 4)
+                {
+                    ushort possibleHandle =
+                        BinaryPrimitives.ReadUInt16LittleEndian(
+                            response.AsSpan(2, 2));
+
+                    if (possibleHandle == expectedStructureHandle.Value)
+                    {
+                        headerSize = 4;
+                    }
+                }
+            }
+
+            if (response.Length > headerSize)
+            {
+                int payloadLength =
+                    response.Length - headerSize;
+
+                accumulated.AddRange(
+                    response.AsSpan(headerSize, payloadLength).ToArray());
+
+                byteOffset += (uint)payloadLength;
+            }
+
             first = false;
 
-            if (status == 0x00) break;
+            if (expectedStructureSize.HasValue &&
+                accumulated.Count >= expectedStructureSize.Value)
+            {
+                break;
+            }
+
+            if (status == 0x00)
+            {
+                break;
+            }
         }
-        return acc.ToArray();
+
+        if (expectedStructureSize.HasValue &&
+            accumulated.Count != expectedStructureSize.Value)
+        {
+            throw new InvalidOperationException(
+                $"ReadStructBytesAsync: expected " +
+                $"{expectedStructureSize.Value} structure bytes, " +
+                $"received {accumulated.Count}.");
+        }
+
+        return accumulated.ToArray();
     }
 
     /// <summary>Write a StructureValue to a tag.</summary>
@@ -653,12 +781,14 @@ public sealed class TagClient : IAsyncDisposable
         while (true)
         {
             // Path: [optional program prefix] + Class 0x6B + Instance (16-bit)
-            var classInstPath = new byte[6];
-            classInstPath[0] = 0x20; classInstPath[1] = 0x6B;
-            classInstPath[2] = 0x25; classInstPath[3] = 0x00;
-            BinaryPrimitives.WriteUInt16LittleEndian(classInstPath.AsSpan(4), (ushort)startInstance);
+            var classInstPath = new List<byte>
+            {
+                0x20, 0x6B
+            };
 
-            var path = new byte[programPrefix.Length + classInstPath.Length];
+            EmitLogicalInstance(classInstPath, startInstance);
+
+            var path = new byte[programPrefix.Length + classInstPath.Count];
             programPrefix.CopyTo(path, 0);
             classInstPath.CopyTo(path, programPrefix.Length);
 
@@ -745,9 +875,6 @@ public sealed class TagClient : IAsyncDisposable
 
         // Step 2: Template Read (0x4C) — get member info + names
         // Read size = (definitionSize * 4) - 23
-        int readSize = (int)(definitionSize * 4) - 23;
-        if (readSize <= 0) readSize = 256;
-
         var members = new List<TemplateMemberDetail>();
         string templateName = "";
 
@@ -755,20 +882,47 @@ public sealed class TagClient : IAsyncDisposable
         var allDefData = new List<byte>();
         uint readOffset = 0;
 
+        const ushort templateChunkSize = 480;
+
         while (true)
         {
             var readReqData = new byte[6];
-            BinaryPrimitives.WriteUInt32LittleEndian(readReqData, readOffset);
-            int remaining = readSize - (int)readOffset;
-            BinaryPrimitives.WriteUInt16LittleEndian(readReqData.AsSpan(4), (ushort)Math.Min(remaining, ushort.MaxValue));
 
-            var (readStatus, readData) = await SendCipWithStatusAsync(0x4C, attrPath, readReqData, ct);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                readReqData.AsSpan(0, 4),
+                readOffset);
 
-            if (readStatus != 0x00 && readStatus != 0x06) break;
+            BinaryPrimitives.WriteUInt16LittleEndian(
+                readReqData.AsSpan(4, 2),
+                templateChunkSize);
+
+            var (readStatus, readData) =
+                await SendCipWithStatusAsync(
+                    0x4C,
+                    attrPath,
+                    readReqData,
+                    ct);
+
+            if (readStatus != 0x00 && readStatus != 0x06)
+            {
+                throw new InvalidOperationException(
+                    $"Template read failed: status=0x{readStatus:X2}");
+            }
+
+            if (readData.Length == 0)
+            {
+                throw new InvalidOperationException(
+                    $"Template read returned status 0x{readStatus:X2} " +
+                    "with no data; refusing to retry indefinitely.");
+            }
+
             allDefData.AddRange(readData);
             readOffset += (uint)readData.Length;
 
-            if (readStatus == 0x00) break;
+            if (readStatus == 0x00)
+            {
+                break;
+            }
         }
 
         var defBytes = allDefData.ToArray();
@@ -1135,13 +1289,40 @@ public sealed class TagClient : IAsyncDisposable
         }
     }
 
-    private static void EmitSymbolInstance(List<byte> dst, uint inst)
+    private static void EmitLogicalInstance(List<byte> dst, uint instanceId)
     {
-        // Logical: Class 0x6B (Symbol Object) + 16-bit Instance.
-        dst.Add(0x20); dst.Add(0x6B);
-        dst.Add(0x25); dst.Add(0x00);
-        dst.Add((byte)(inst & 0xFF));
-        dst.Add((byte)((inst >> 8) & 0xFF));
+        if (instanceId <= byte.MaxValue)
+        {
+            // 8-bit logical instance segment
+            dst.Add(0x24);
+            dst.Add((byte)instanceId);
+        }
+        else if (instanceId <= ushort.MaxValue)
+        {
+            // 16-bit logical instance segment
+            dst.Add(0x25);
+            dst.Add(0x00);
+            dst.Add((byte)(instanceId & 0xFF));
+            dst.Add((byte)((instanceId >> 8) & 0xFF));
+        }
+        else
+        {
+            // 32-bit logical instance segment
+            dst.Add(0x26);
+            dst.Add(0x00);
+            dst.Add((byte)(instanceId & 0xFF));
+            dst.Add((byte)((instanceId >> 8) & 0xFF));
+            dst.Add((byte)((instanceId >> 16) & 0xFF));
+            dst.Add((byte)((instanceId >> 24) & 0xFF));
+        }
+    }
+
+    private static void EmitSymbolInstance(List<byte> dst, uint instanceId)
+    {
+        // Symbol Object, class 0x6B, followed by the tag's instance ID.
+        dst.Add(0x20);
+        dst.Add(0x6B);
+        EmitLogicalInstance(dst, instanceId);
     }
 
     /// <summary>

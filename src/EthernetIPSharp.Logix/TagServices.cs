@@ -21,8 +21,15 @@ public static class TagServices
 
     private const int MaxReplyData = 480; // ~500 bytes minus overhead
 
-    private static int GetReadTypePrefixLength(Tag tag) =>
-        LogixDataTypes.IsStruct(tag.SymbolType) ? 4 : 2;
+    private static int GetReadTypePrefixLength(
+        Tag tag,
+        bool includeStructureHandle)
+    {
+        if (!LogixDataTypes.IsStruct(tag.SymbolType))
+            return 2;
+
+        return includeStructureHandle ? 4 : 2;
+    }
 
     /// <summary>
     /// Read Tag Service (0x4C).
@@ -51,10 +58,22 @@ public static class TagServices
         if (responseLen > MaxReplyData)
         {
             int fitBytes = MaxReplyData - typeSize;
-            return BuildReadResponse(tag, serviceCode, byteOffset, fitBytes, isPartial: true);
+            return BuildReadResponse(
+                tag,
+                serviceCode,
+                byteOffset,
+                fitBytes,
+                isPartial: true,
+                includeStructureHandle: true);
         }
 
-        return BuildReadResponse(tag, serviceCode, byteOffset, bytesToRead, isPartial: false);
+        return BuildReadResponse(
+            tag,
+            serviceCode,
+            byteOffset,
+            bytesToRead,
+            isPartial: false,
+            includeStructureHandle: true);
     }
 
     /// <summary>
@@ -117,39 +136,83 @@ public static class TagServices
     /// Reply: atomic type (UINT) or structure type (A0 02 + handle) + data bytes
     /// </summary>
     public static CipServiceResponse HandleReadTagFragmented(
-        Tag tag, 
-        byte serviceCode, 
-        ReadOnlyMemory<byte> data, 
+        Tag tag,
+        byte serviceCode,
+        ReadOnlyMemory<byte> data,
         int elementOffset = 0)
     {
         if (data.Length < 6)
-            return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
+        {
+            return CipServiceResponse.Error(
+                serviceCode,
+                CipStatus.Error(CipStatus.InsufficientCommandData));
+        }
+
         if (elementOffset < 0)
-            return CipServiceResponse.Error(serviceCode, CipStatus.GeneralError.BeyondEndOfDataObject);
+        {
+            return CipServiceResponse.Error(
+                serviceCode,
+                CipStatus.GeneralError.BeyondEndOfDataObject);
+        }
 
         var span = data.Span;
-        ushort elementCount = BinaryPrimitives.ReadUInt16LittleEndian(span);
-        uint fragmentOffset = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(2));
+
+        ushort elementCount =
+            BinaryPrimitives.ReadUInt16LittleEndian(span);
+
+        uint fragmentOffset =
+            BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(2));
 
         if (elementCount == 0)
             elementCount = 1;
 
-        int elementBaseOffset = elementOffset * tag.ElementSize;
+        int elementBaseOffset =
+            checked(elementOffset * tag.ElementSize);
 
-        int totalBytes = elementCount * tag.ElementSize;
+        int totalBytes =
+            checked(elementCount * tag.ElementSize);
 
-        if (elementBaseOffset < 0 || elementBaseOffset + totalBytes > tag.DataSize)
-            return CipServiceResponse.Error(serviceCode, CipStatus.GeneralError.BeyondEndOfDataObject);
+        if (elementBaseOffset < 0 ||
+            elementBaseOffset + totalBytes > tag.DataSize)
+        {
+            return CipServiceResponse.Error(
+                serviceCode,
+                CipStatus.GeneralError.BeyondEndOfDataObject);
+        }
+
         if (fragmentOffset >= (uint)totalBytes)
-            return CipServiceResponse.Error(serviceCode, CipStatus.GeneralError.BeyondEndOfDataObject);
+        {
+            return CipServiceResponse.Error(
+                serviceCode,
+                CipStatus.GeneralError.BeyondEndOfDataObject);
+        }
 
-        int remaining = totalBytes - (int)fragmentOffset;
-        int typePrefixLen = GetReadTypePrefixLength(tag);
-        int chunkSize = Math.Min(remaining, MaxReplyData - typePrefixLen);
-        int byteOffset = elementBaseOffset + (int)fragmentOffset;
-        bool moreData = (int)fragmentOffset + chunkSize < totalBytes;
+        bool includeStructureHandle = fragmentOffset == 0;
 
-        return BuildReadResponse(tag, serviceCode, byteOffset, chunkSize, isPartial: moreData);
+        int typePrefixLength =
+            GetReadTypePrefixLength(tag, includeStructureHandle);
+
+        int remaining =
+            totalBytes - checked((int)fragmentOffset);
+
+        int chunkSize =
+            Math.Min(
+                remaining,
+                MaxReplyData - typePrefixLength);
+
+        int byteOffset =
+            checked(elementBaseOffset + (int)fragmentOffset);
+
+        bool moreData =
+            (int)fragmentOffset + chunkSize < totalBytes;
+
+        return BuildReadResponse(
+            tag,
+            serviceCode,
+            byteOffset,
+            chunkSize,
+            isPartial: moreData,
+            includeStructureHandle: includeStructureHandle);
     }
 
     /// <summary>
@@ -242,42 +305,72 @@ public static class TagServices
     /// Shared helper to build a Read Tag / Read Tag Fragmented response.
     /// Uses ArrayPool to avoid per-call allocations on the hot read path.
     /// </summary>
-    private static CipServiceResponse BuildReadResponse(Tag tag, byte serviceCode,
-        int byteOffset, int dataLength, bool isPartial)
+    private static CipServiceResponse BuildReadResponse(
+        Tag tag,
+        byte serviceCode,
+        int byteOffset,
+        int dataLength,
+        bool isPartial,
+        bool includeStructureHandle = true)
     {
-        bool isStruct = LogixDataTypes.IsStruct(tag.SymbolType);
-        int typePrefixLen = isStruct ? 4 : 2;
-        int responseLen = typePrefixLen + dataLength;
-        var rented = ArrayPool<byte>.Shared.Rent(responseLen);
+        bool isStruct =
+            LogixDataTypes.IsStruct(tag.SymbolType);
+
+        int typePrefixLength =
+            isStruct
+                ? GetReadTypePrefixLength(tag, includeStructureHandle)
+                : 2;
+
+        int responseLength =
+            typePrefixLength + dataLength;
+
+        var rented =
+            ArrayPool<byte>.Shared.Rent(responseLength);
 
         try
         {
             if (isStruct)
             {
-                BinaryPrimitives.WriteUInt16LittleEndian(rented, StructureTypeCode);
-                BinaryPrimitives.WriteUInt16LittleEndian(rented.AsSpan(2), tag.TagType);
+                BinaryPrimitives.WriteUInt16LittleEndian(
+                    rented.AsSpan(0, 2),
+                    0x02A0);
+
+                if (includeStructureHandle)
+                {
+                    BinaryPrimitives.WriteUInt16LittleEndian(
+                        rented.AsSpan(2, 2),
+                        tag.TagType);
+                }
             }
             else
             {
-                BinaryPrimitives.WriteUInt16LittleEndian(rented, tag.TagType);
+                BinaryPrimitives.WriteUInt16LittleEndian(
+                    rented.AsSpan(0, 2),
+                    tag.TagType);
             }
 
-            tag.GetData(byteOffset, dataLength).CopyTo(rented.AsSpan(typePrefixLen));
+            tag.GetData(
+                byteOffset,
+                dataLength)
+                .CopyTo(rented.AsSpan(typePrefixLength));
 
-            // Copy to exact-sized array for the response (ArrayPool may over-allocate)
-            var result = rented.AsSpan(0, responseLen).ToArray();
+            var result =
+                rented.AsSpan(0, responseLength).ToArray();
 
             if (isPartial)
             {
                 return new CipServiceResponse
                 {
                     ServiceCode = (byte)(serviceCode | 0x80),
-                    Status = CipStatus.Error(CipStatus.DataDoesNotFitInResponsePacket),
-                    Data = result,
+                    Status = CipStatus.Error(
+                        CipStatus.DataDoesNotFitInResponsePacket),
+                    Data = result
                 };
             }
 
-            return CipServiceResponse.Success(serviceCode, result);
+            return CipServiceResponse.Success(
+                serviceCode,
+                result);
         }
         finally
         {
