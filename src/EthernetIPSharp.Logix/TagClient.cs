@@ -1159,13 +1159,40 @@ public sealed class TagClient : IAsyncDisposable
         }
     }
 
-    private static void EmitSymbolInstance(List<byte> dst, uint inst)
+    private static void EmitLogicalInstance(List<byte> dst, uint instanceId)
     {
-        // Logical: Class 0x6B (Symbol Object) + 16-bit Instance.
-        dst.Add(0x20); dst.Add(0x6B);
-        dst.Add(0x25); dst.Add(0x00);
-        dst.Add((byte)(inst & 0xFF));
-        dst.Add((byte)((inst >> 8) & 0xFF));
+        if (instanceId <= byte.MaxValue)
+        {
+            // 8-bit logical instance segment
+            dst.Add(0x24);
+            dst.Add((byte)instanceId);
+        }
+        else if (instanceId <= ushort.MaxValue)
+        {
+            // 16-bit logical instance segment
+            dst.Add(0x25);
+            dst.Add(0x00);
+            dst.Add((byte)(instanceId & 0xFF));
+            dst.Add((byte)((instanceId >> 8) & 0xFF));
+        }
+        else
+        {
+            // 32-bit logical instance segment
+            dst.Add(0x26);
+            dst.Add(0x00);
+            dst.Add((byte)(instanceId & 0xFF));
+            dst.Add((byte)((instanceId >> 8) & 0xFF));
+            dst.Add((byte)((instanceId >> 16) & 0xFF));
+            dst.Add((byte)((instanceId >> 24) & 0xFF));
+        }
+    }
+
+    private static void EmitSymbolInstance(List<byte> dst, uint instanceId)
+    {
+        // Symbol Object, class 0x6B, followed by the tag's instance ID.
+        dst.Add(0x20);
+        dst.Add(0x6B);
+        EmitLogicalInstance(dst, instanceId);
     }
 
     /// <summary>
