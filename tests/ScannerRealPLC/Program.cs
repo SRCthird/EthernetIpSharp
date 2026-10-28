@@ -1,4 +1,4 @@
-using EthernetIPSharp.Logix;
+using SRCthird.EthernetIPSharp.Logix;
 
 Console.WriteLine("=== Read AMix, Write, Read Back ===");
 

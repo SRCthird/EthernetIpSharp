@@ -2,9 +2,9 @@
 // Or compile as a standalone console app
 
 using System.Net;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Logix;
-using EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Logix;
+using SRCthird.EthernetIPSharp.Protocol;
 
 var identity = new IdentityInfo
 {

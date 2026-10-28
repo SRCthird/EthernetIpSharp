@@ -1,5 +1,5 @@
 using System.Buffers.Binary;
-using EthernetIPSharp.Logix;
+using SRCthird.EthernetIPSharp.Logix;
 
 const string Host = "127.0.0.1";
 const int Port = 44818;

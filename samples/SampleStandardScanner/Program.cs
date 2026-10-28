@@ -39,7 +39,7 @@
 
 using System.Buffers.Binary;
 using System.Net;
-using EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Protocol;
 
 string GetArg(string key, string defaultValue)
 {

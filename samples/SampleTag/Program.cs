@@ -5,7 +5,7 @@
 // What this sample does:
 //   Connects to a Logix controller, reads a structured tag, writes new values
 //   into it, then reads the tag back to verify the write round-tripped
-//   correctly. Uses TagClient (EthernetIPSharp.Logix) which speaks the
+//   correctly. Uses TagClient (SRCthird.EthernetIPSharp.Logix) which speaks the
 //   Logix-specific symbol/tag service over EtherNet/IP.
 //
 // The default tag "Amix" is a structure expected to contain these members:
@@ -28,7 +28,7 @@
 // match your project's structure.
 // ============================================================================
 
-using EthernetIPSharp.Logix;
+using SRCthird.EthernetIPSharp.Logix;
 
 string GetArg(string key, string defaultValue)
 {
