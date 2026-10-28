@@ -1,9 +1,9 @@
 using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Protocol;
+namespace SRCthird.EthernetIPSharp.Protocol;
 
 /// <summary>
 /// EtherNet/IP Scanner (originator/client side).

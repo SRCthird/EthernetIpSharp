@@ -1,4 +1,4 @@
-namespace EthernetIPSharp.Safety;
+namespace SRCthird.EthernetIPSharp.Safety;
 
 /// <summary>Safety wire format selection.</summary>
 public enum SafetyFormat : byte

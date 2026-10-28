@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace EthernetIPSharp.Safety;
+namespace SRCthird.EthernetIPSharp.Safety;
 
 /// <summary>
 /// Safety Network Segment (0x50) parser/encoder for Forward Open connection paths.

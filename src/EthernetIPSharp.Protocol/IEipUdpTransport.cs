@@ -1,7 +1,7 @@
 using System.Net;
-using EthernetIPSharp.Protocol.Messages;
+using SRCthird.EthernetIPSharp.Protocol.Messages;
 
-namespace EthernetIPSharp.Protocol;
+namespace SRCthird.EthernetIPSharp.Protocol;
 
 /// <summary>
 /// UDP I/O transport abstraction for EtherNet/IP Class 0/1 data.

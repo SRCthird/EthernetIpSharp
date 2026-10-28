@@ -1,7 +1,7 @@
 using System.Net;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Protocol.Messages;
+namespace SRCthird.EthernetIPSharp.Protocol.Messages;
 
 /// <summary>
 /// EtherNet/IP encapsulation message — a 24-byte header followed by an

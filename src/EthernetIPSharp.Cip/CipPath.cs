@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 
-namespace EthernetIPSharp.Cip;
+namespace SRCthird.EthernetIPSharp.Cip;
 
 /// <summary>
 /// Parsed CIP EPATH — logical segments (class, instance, attribute, connection point, element),

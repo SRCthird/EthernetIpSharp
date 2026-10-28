@@ -1,8 +1,8 @@
 using System.Buffers.Binary;
 using System.Text;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Logix;
+namespace SRCthird.EthernetIPSharp.Logix;
 
 /// <summary>
 /// CIP Template Object (Class 0x6C).

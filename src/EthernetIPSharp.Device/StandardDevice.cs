@@ -1,9 +1,9 @@
 using System.Net;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Connections;
-using EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Connections;
+using SRCthird.EthernetIPSharp.Protocol;
 
-namespace EthernetIPSharp.Device;
+namespace SRCthird.EthernetIPSharp.Device;
 
 /// <summary>
 /// Standard (non-safety) EtherNet/IP device.

@@ -1,12 +1,12 @@
 using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Connections;
-using EthernetIPSharp.Device;
-using EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Connections;
+using SRCthird.EthernetIPSharp.Device;
+using SRCthird.EthernetIPSharp.Protocol;
 
-namespace EthernetIPSharp.Protocol.Tests;
+namespace SRCthird.EthernetIPSharp.Protocol.Tests;
 
 /// <summary>
 /// End-to-end test emulating the Studio 5000 Generic Ethernet Module "test" config:
@@ -43,7 +43,7 @@ public class EchoModuleTests : IAsyncLifetime
             MajorRevision = 1,
             MinorRevision = 0,
             SerialNumber = 0xC0FFEE,
-            ProductName = "EthernetIPSharp Echo Module",
+            ProductName = "SRCthird.EthernetIPSharp Echo Module",
         };
 
         _device = new StandardDevice(identity, IPAddress.Loopback, "test");

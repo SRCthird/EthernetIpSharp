@@ -1,11 +1,11 @@
 using System.Buffers.Binary;
 using System.Net;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Device;
-using EthernetIPSharp.Logix;
-using EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Device;
+using SRCthird.EthernetIPSharp.Logix;
+using SRCthird.EthernetIPSharp.Protocol;
 
-namespace EthernetIPSharp.Protocol.Tests;
+namespace SRCthird.EthernetIPSharp.Protocol.Tests;
 
 /// <summary>
 /// Advanced scanner tests: multiple connections, error paths, explicit messaging,
@@ -37,7 +37,7 @@ public class ScannerAdvancedTests : IAsyncLifetime
         };
 
         _device = new StandardDevice(identity, IPAddress.Loopback,
-            _logix, new AssemblyObject(), new EthernetIPSharp.Connections.ConnectionManagerObject(),
+            _logix, new AssemblyObject(), new SRCthird.EthernetIPSharp.Connections.ConnectionManagerObject(),
             "AdvancedTarget");
 
         _device.AddAssembly(100, 64, "Produced");

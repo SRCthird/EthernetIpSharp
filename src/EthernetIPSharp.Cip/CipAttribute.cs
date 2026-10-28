@@ -1,4 +1,4 @@
-namespace EthernetIPSharp.Cip;
+namespace SRCthird.EthernetIPSharp.Cip;
 
 /// <summary>
 /// Flags controlling which CIP services can access an attribute.

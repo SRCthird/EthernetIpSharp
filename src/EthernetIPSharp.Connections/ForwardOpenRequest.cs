@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace EthernetIPSharp.Connections;
+namespace SRCthird.EthernetIPSharp.Connections;
 
 /// <summary>
 /// Parsed Forward Open / Large Forward Open request parameters.

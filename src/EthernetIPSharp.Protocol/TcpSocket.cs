@@ -2,7 +2,7 @@ using System.Buffers;
 using System.Net;
 using System.Net.Sockets;
 
-namespace EthernetIPSharp.Protocol;
+namespace SRCthird.EthernetIPSharp.Protocol;
 
 /// <summary>
 /// Pure TCP listening socket. No protocol knowledge.

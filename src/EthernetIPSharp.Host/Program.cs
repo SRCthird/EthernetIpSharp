@@ -1,9 +1,9 @@
 using System.Net;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Connections;
-using EthernetIPSharp.Device;
-using EthernetIPSharp.Protocol;
-using EthernetIPSharp.Safety;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Connections;
+using SRCthird.EthernetIPSharp.Device;
+using SRCthird.EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Safety;
 
 // Select profile: "echo" or "plc" (default: echo)
 string profile = args.Length > 0 ? args[0].ToLower() : "echo";

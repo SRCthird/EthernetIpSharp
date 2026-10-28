@@ -1,4 +1,4 @@
-namespace EthernetIPSharp.Cip;
+namespace SRCthird.EthernetIPSharp.Cip;
 
 /// <summary>
 /// Represents a single instance of a CIP class.

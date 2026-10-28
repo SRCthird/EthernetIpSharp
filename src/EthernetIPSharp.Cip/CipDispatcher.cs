@@ -1,4 +1,4 @@
-namespace EthernetIPSharp.Cip;
+namespace SRCthird.EthernetIPSharp.Cip;
 
 /// <summary>
 /// Default ICipDispatch implementation that routes requests through the CIP object tree.

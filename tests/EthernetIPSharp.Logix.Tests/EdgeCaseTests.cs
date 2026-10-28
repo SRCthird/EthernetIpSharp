@@ -1,8 +1,8 @@
 using System.Buffers.Binary;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Logix;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Logix;
 
-namespace EthernetIPSharp.Logix.Tests;
+namespace SRCthird.EthernetIPSharp.Logix.Tests;
 
 /// <summary>
 /// Tests for error paths and edge cases found via coverage analysis.
@@ -230,7 +230,7 @@ public class EdgeCaseTests
     {
         var logix = CreateDispatcher();
         // We need a ConnectionManagerObject to test this
-        var connMgr = new EthernetIPSharp.Connections.ConnectionManagerObject();
+        var connMgr = new SRCthird.EthernetIPSharp.Connections.ConnectionManagerObject();
         connMgr.ValidateAssembly = _ => 16; // All assemblies valid with 16 bytes
 
         var cipClass = connMgr.CipClass;
@@ -254,7 +254,7 @@ public class EdgeCaseTests
     public void ForwardClose_WrongTriad_ReturnsConnectionNotFound()
     {
         var logix = CreateDispatcher();
-        var connMgr = new EthernetIPSharp.Connections.ConnectionManagerObject();
+        var connMgr = new SRCthird.EthernetIPSharp.Connections.ConnectionManagerObject();
         logix.RegisterClass(connMgr.CipClass);
 
         // Forward Close with a triad that was never opened

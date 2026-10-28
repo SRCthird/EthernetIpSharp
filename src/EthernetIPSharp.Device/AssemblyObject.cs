@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Device;
+namespace SRCthird.EthernetIPSharp.Device;
 
 /// <summary>
 /// CIP Assembly Object (Class 0x04).

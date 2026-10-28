@@ -1,4 +1,4 @@
-namespace EthernetIPSharp.Protocol;
+namespace SRCthird.EthernetIPSharp.Protocol;
 
 /// <summary>
 /// Configuration for establishing an I/O connection via Forward Open.

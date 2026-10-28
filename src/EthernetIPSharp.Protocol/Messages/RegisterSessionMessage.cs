@@ -1,8 +1,8 @@
 using System.Buffers.Binary;
 using System.Net;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Protocol.Messages;
+namespace SRCthird.EthernetIPSharp.Protocol.Messages;
 
 /// <summary>
 /// Encapsulation RegisterSession (0x0065). 4-byte payload: protocol version + options flags.

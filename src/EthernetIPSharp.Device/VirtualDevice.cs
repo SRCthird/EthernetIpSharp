@@ -3,12 +3,12 @@ using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Net;
 using System.Runtime.InteropServices;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Connections;
-using EthernetIPSharp.Protocol;
-using EthernetIPSharp.Protocol.Messages;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Connections;
+using SRCthird.EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Protocol.Messages;
 
-namespace EthernetIPSharp.Device;
+namespace SRCthird.EthernetIPSharp.Device;
 
 /// <summary>
 /// Abstract base for an EtherNet/IP device.

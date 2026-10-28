@@ -1,4 +1,4 @@
-namespace EthernetIPSharp.Cip;
+namespace SRCthird.EthernetIPSharp.Cip;
 
 /// <summary>
 /// Device identity information used in ListIdentity responses and the Identity CIP object (class 0x01).

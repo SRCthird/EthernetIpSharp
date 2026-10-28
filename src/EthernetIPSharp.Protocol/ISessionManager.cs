@@ -1,4 +1,4 @@
-namespace EthernetIPSharp.Protocol;
+namespace SRCthird.EthernetIPSharp.Protocol;
 
 /// <summary>
 /// Encapsulation session management abstraction.

@@ -1,8 +1,8 @@
-﻿using EthernetIPSharp.Cip;
+﻿using SRCthird.EthernetIPSharp.Cip;
 using System.Buffers;
 using System.Buffers.Binary;
 
-namespace EthernetIPSharp.Logix;
+namespace SRCthird.EthernetIPSharp.Logix;
 
 internal static class MemberTagServices
 {

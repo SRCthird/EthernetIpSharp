@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace EthernetIPSharp.Protocol.Messages;
+namespace SRCthird.EthernetIPSharp.Protocol.Messages;
 
 /// <summary>
 /// Transport-agnostic marker for a network message. Concrete implementations

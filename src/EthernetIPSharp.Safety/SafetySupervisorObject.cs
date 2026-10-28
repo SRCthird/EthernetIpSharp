@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Safety;
+namespace SRCthird.EthernetIPSharp.Safety;
 
 /// <summary>
 /// CIP Safety Supervisor Object (Class 0x39).

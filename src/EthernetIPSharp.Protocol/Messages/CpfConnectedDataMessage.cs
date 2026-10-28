@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Net;
 
-namespace EthernetIPSharp.Protocol.Messages;
+namespace SRCthird.EthernetIPSharp.Protocol.Messages;
 
 /// <summary>
 /// CPF (Common Packet Format) packet carrying connected I/O data over UDP:

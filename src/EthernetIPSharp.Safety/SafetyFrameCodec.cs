@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace EthernetIPSharp.Safety;
+namespace SRCthird.EthernetIPSharp.Safety;
 
 /// <summary>
 /// Encodes and decodes CIP Safety wire format frames.

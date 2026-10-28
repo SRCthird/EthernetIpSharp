@@ -1,7 +1,7 @@
 using System.Net;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Protocol.Messages;
+namespace SRCthird.EthernetIPSharp.Protocol.Messages;
 
 /// <summary>
 /// Encapsulation ListIdentity (0x0063). Discovery query.

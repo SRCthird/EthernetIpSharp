@@ -1,11 +1,11 @@
 using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Device;
-using EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Device;
+using SRCthird.EthernetIPSharp.Protocol;
 
-namespace EthernetIPSharp.Protocol.Tests;
+namespace SRCthird.EthernetIPSharp.Protocol.Tests;
 
 /// <summary>
 /// Encapsulation layer tests: RegisterSession, ListIdentity, SendRRData, session validation.

@@ -38,10 +38,10 @@
 using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Connections;
-using EthernetIPSharp.Device;
-using EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Connections;
+using SRCthird.EthernetIPSharp.Device;
+using SRCthird.EthernetIPSharp.Protocol;
 
 // ----------------------------------------------------------------------------
 // Minimal --key=value argument parser

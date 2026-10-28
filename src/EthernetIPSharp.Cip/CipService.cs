@@ -1,4 +1,4 @@
-namespace EthernetIPSharp.Cip;
+namespace SRCthird.EthernetIPSharp.Cip;
 
 /// <summary>
 /// A CIP service request — service code, target path, and request-specific data.

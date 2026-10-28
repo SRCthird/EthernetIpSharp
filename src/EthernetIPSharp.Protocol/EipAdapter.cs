@@ -1,10 +1,10 @@
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Net;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Protocol.Messages;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Protocol.Messages;
 
-namespace EthernetIPSharp.Protocol;
+namespace SRCthird.EthernetIPSharp.Protocol;
 
 /// <summary>
 /// EtherNet/IP Adapter (server/target side).

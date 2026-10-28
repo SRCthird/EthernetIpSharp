@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\EthernetIPSharp.Cip\EthernetIPSharp.Cip.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Cip\SRCthird.EthernetIPSharp.Cip.csproj" />
   </ItemGroup>
 
 </Project>

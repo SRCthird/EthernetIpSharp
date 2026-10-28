@@ -2,9 +2,9 @@ using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Logix;
+namespace SRCthird.EthernetIPSharp.Logix;
 
 /// <summary>
 /// Client for reading and writing Logix tags over EtherNet/IP.

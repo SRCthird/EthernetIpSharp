@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace EthernetIPSharp.Protocol.Messages;
+namespace SRCthird.EthernetIPSharp.Protocol.Messages;
 
 /// <summary>
 /// IMessageManager that parses CPF-format datagrams (UDP).

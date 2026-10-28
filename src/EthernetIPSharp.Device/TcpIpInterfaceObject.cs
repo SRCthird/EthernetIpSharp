@@ -1,7 +1,7 @@
 using System.Net;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Device;
+namespace SRCthird.EthernetIPSharp.Device;
 
 /// <summary>
 /// CIP TCP/IP Interface Object (Class 0xF5). Required by EtherNet/IP devices.

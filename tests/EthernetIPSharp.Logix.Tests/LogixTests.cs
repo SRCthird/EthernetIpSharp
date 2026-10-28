@@ -1,11 +1,11 @@
 using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Logix;
-using EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Logix;
+using SRCthird.EthernetIPSharp.Protocol;
 
-namespace EthernetIPSharp.Logix.Tests;
+namespace SRCthird.EthernetIPSharp.Logix.Tests;
 
 /// <summary>
 /// Core Logix tag read/write tests over TCP with symbolic segment addressing.
@@ -39,7 +39,7 @@ public class LogixTests : IAsyncLifetime
             MajorRevision = 32,
             MinorRevision = 11,
             SerialNumber = 0xDEAD,
-            ProductName = "EthernetIPSharp Logix Emulator",
+            ProductName = "SRCthird.EthernetIPSharp Logix Emulator",
         };
 
         _adapter = new EipAdapter(_logix, identity);

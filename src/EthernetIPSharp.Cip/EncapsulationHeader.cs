@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace EthernetIPSharp.Cip;
+namespace SRCthird.EthernetIPSharp.Cip;
 
 /// <summary>
 /// Encapsulation command codes sent over TCP port 44818.

@@ -1,6 +1,6 @@
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Device;
+namespace SRCthird.EthernetIPSharp.Device;
 
 /// <summary>
 /// CIP Identity Object (Class 0x01). Required by all EtherNet/IP devices.

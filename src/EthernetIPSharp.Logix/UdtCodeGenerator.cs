@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace EthernetIPSharp.Logix;
+namespace SRCthird.EthernetIPSharp.Logix;
 
 /// <summary>
 /// Generates C# source code for a UDT structure type from a TemplateInfo.
@@ -27,7 +27,7 @@ public static class UdtCodeGenerator
         var sb = new StringBuilder();
 
         sb.AppendLine("using System.Buffers.Binary;");
-        sb.AppendLine("using EthernetIPSharp.Logix;");
+        sb.AppendLine("using SRCthird.EthernetIPSharp.Logix;");
         sb.AppendLine();
         sb.AppendLine($"namespace {namespaceName};");
         sb.AppendLine();
@@ -96,7 +96,7 @@ public static class UdtCodeGenerator
     {
         var sb = new StringBuilder();
         sb.AppendLine("using System.Buffers.Binary;");
-        sb.AppendLine("using EthernetIPSharp.Logix;");
+        sb.AppendLine("using SRCthird.EthernetIPSharp.Logix;");
         sb.AppendLine();
         sb.AppendLine($"namespace {namespaceName};");
         sb.AppendLine();

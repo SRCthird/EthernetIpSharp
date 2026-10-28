@@ -1,8 +1,8 @@
 using System.Buffers;
 using System.Net;
-using EthernetIPSharp.Protocol.Messages;
+using SRCthird.EthernetIPSharp.Protocol.Messages;
 
-namespace EthernetIPSharp.Protocol;
+namespace SRCthird.EthernetIPSharp.Protocol;
 
 /// <summary>
 /// EtherNet/IP UDP I/O transport (port 2222 / 0x08AE).

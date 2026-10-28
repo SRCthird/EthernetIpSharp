@@ -1,8 +1,8 @@
 using System.Text;
 using Xunit;
-using EthernetIPSharp.Safety;
+using SRCthird.EthernetIPSharp.Safety;
 
-namespace EthernetIPSharp.Safety.Tests;
+namespace SRCthird.EthernetIPSharp.Safety.Tests;
 
 public class SafetyCrcTests
 {

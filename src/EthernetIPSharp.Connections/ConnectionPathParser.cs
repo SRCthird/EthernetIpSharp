@@ -1,6 +1,6 @@
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Connections;
+namespace SRCthird.EthernetIPSharp.Connections;
 
 /// <summary>
 /// Result of parsing a Forward Open connection path.

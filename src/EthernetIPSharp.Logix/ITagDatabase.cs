@@ -1,4 +1,4 @@
-namespace EthernetIPSharp.Logix;
+namespace SRCthird.EthernetIPSharp.Logix;
 
 /// <summary>
 /// Tag storage and retrieval abstraction.

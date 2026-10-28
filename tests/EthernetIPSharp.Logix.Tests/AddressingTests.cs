@@ -1,11 +1,11 @@
 using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Logix;
-using EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Logix;
+using SRCthird.EthernetIPSharp.Protocol;
 
-namespace EthernetIPSharp.Logix.Tests;
+namespace SRCthird.EthernetIPSharp.Logix.Tests;
 
 /// <summary>
 /// Tests that both addressing methods work for Read/Write Tag:

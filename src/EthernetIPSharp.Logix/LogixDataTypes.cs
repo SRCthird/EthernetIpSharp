@@ -1,4 +1,4 @@
-namespace EthernetIPSharp.Logix;
+namespace SRCthird.EthernetIPSharp.Logix;
 
 /// <summary>
 /// Logix CIP tag type constants and utilities.

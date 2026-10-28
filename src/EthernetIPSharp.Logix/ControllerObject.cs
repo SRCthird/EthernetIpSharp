@@ -1,7 +1,7 @@
 ﻿using System.Buffers.Binary;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Logix;
+namespace SRCthird.EthernetIPSharp.Logix;
 
 /// <summary>
 /// Rockwell Controller Object (class 0xAC).

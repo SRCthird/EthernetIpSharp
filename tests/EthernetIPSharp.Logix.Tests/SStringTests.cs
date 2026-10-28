@@ -2,10 +2,10 @@ using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Protocol;
 
-namespace EthernetIPSharp.Logix.Tests;
+namespace SRCthird.EthernetIPSharp.Logix.Tests;
 
 /// <summary>
 /// Tests for the atomic CIP SHORT_STRING tag type (0xDA).
@@ -39,7 +39,7 @@ public sealed class SStringTests : IAsyncLifetime
             MajorRevision = 32,
             MinorRevision = 11,
             SerialNumber = 0xDEAD,
-            ProductName = "EthernetIPSharp Logix SHORT_STRING Test",
+            ProductName = "SRCthird.EthernetIPSharp Logix SHORT_STRING Test",
         };
 
         _adapter = new EipAdapter(_logix, identity);

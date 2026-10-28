@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace EthernetIPSharp.Connections;
+namespace SRCthird.EthernetIPSharp.Connections;
 
 /// <summary>State of an I/O connection.</summary>
 public enum ConnectionState

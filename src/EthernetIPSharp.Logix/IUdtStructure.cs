@@ -1,4 +1,4 @@
-namespace EthernetIPSharp.Logix;
+namespace SRCthird.EthernetIPSharp.Logix;
 
 /// <summary>
 /// Interface for generated UDT structure classes.

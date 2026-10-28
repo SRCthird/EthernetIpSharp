@@ -1,8 +1,8 @@
 using System.Buffers;
 using System.Buffers.Binary;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Logix;
+namespace SRCthird.EthernetIPSharp.Logix;
 
 /// <summary>
 /// Multiple Service Packet Service (0x0A).

@@ -1,7 +1,7 @@
 using System.Net;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Protocol;
+namespace SRCthird.EthernetIPSharp.Protocol;
 
 /// <summary>
 /// EipAdapter variant for Class 0/1 I/O serving — attaches Sockaddr Info

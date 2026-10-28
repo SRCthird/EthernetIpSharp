@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace EthernetIPSharp.Protocol.Messages;
+namespace SRCthird.EthernetIPSharp.Protocol.Messages;
 
 /// <summary>
 /// Parses raw network bytes into typed IMessage objects.

@@ -1,11 +1,11 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Net;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Protocol;
-using EthernetIPSharp.Protocol.Messages;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Protocol.Messages;
 
-namespace EthernetIPSharp.Safety;
+namespace SRCthird.EthernetIPSharp.Safety;
 
 /// <summary>
 /// Parsed safety application reply from a Forward Open response.

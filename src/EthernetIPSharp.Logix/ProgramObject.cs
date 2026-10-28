@@ -1,9 +1,9 @@
-﻿﻿using EthernetIPSharp.Cip;
+﻿using SRCthird.EthernetIPSharp.Cip;
 using System.Buffers.Binary;
 using System.Text;
 
 
-namespace EthernetIPSharp.Logix;
+namespace SRCthird.EthernetIPSharp.Logix;
 
 /// <summary>
 /// Rockwell Program Object (class 0x68).

@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
 // CIP Message Sniffer — logs ALL encapsulation commands with full detail,
 // responds OK to everything. Used to see what the PLC sends.

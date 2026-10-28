@@ -1,4 +1,4 @@
-namespace EthernetIPSharp.Connections;
+namespace SRCthird.EthernetIPSharp.Connections;
 
 /// <summary>
 /// Interface for handling safety-specific Forward Open validation and connection configuration.

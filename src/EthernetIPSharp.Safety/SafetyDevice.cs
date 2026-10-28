@@ -2,12 +2,12 @@ using System.Buffers;
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Net;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Connections;
-using EthernetIPSharp.Device;
-using EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Connections;
+using SRCthird.EthernetIPSharp.Device;
+using SRCthird.EthernetIPSharp.Protocol;
 
-namespace EthernetIPSharp.Safety;
+namespace SRCthird.EthernetIPSharp.Safety;
 
 /// <summary>
 /// CIP Safety EtherNet/IP device.

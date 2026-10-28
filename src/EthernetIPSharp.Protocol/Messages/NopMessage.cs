@@ -1,7 +1,7 @@
 using System.Net;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Protocol.Messages;
+namespace SRCthird.EthernetIPSharp.Protocol.Messages;
 
 /// <summary>Encapsulation Nop (0x0000). No payload, no reply.</summary>
 public sealed class NopMessage : ISerializableMessage

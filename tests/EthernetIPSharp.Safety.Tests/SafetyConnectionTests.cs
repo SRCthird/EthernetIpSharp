@@ -1,11 +1,11 @@
 using System.Net;
 using Xunit;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Connections;
-using EthernetIPSharp.Device;
-using EthernetIPSharp.Safety;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Connections;
+using SRCthird.EthernetIPSharp.Device;
+using SRCthird.EthernetIPSharp.Safety;
 
-namespace EthernetIPSharp.Safety.Tests;
+namespace SRCthird.EthernetIPSharp.Safety.Tests;
 
 public class SafetyConnectionTests
 {

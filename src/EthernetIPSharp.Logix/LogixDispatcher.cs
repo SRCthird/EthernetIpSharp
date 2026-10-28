@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Connections;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Connections;
 
-namespace EthernetIPSharp.Logix;
+namespace SRCthird.EthernetIPSharp.Logix;
 
 /// <summary>
 /// CipDispatcher subclass that models a Logix 5000 controller.

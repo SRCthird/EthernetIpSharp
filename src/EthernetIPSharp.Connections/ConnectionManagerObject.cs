@@ -1,8 +1,8 @@
 using System.Buffers.Binary;
 using System.Collections.Concurrent;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Connections;
+namespace SRCthird.EthernetIPSharp.Connections;
 
 /// <summary>
 /// CIP Connection Manager Object (Class 0x06).

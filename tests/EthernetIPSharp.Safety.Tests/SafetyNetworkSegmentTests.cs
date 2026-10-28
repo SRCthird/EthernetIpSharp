@@ -1,7 +1,7 @@
 using Xunit;
-using EthernetIPSharp.Safety;
+using SRCthird.EthernetIPSharp.Safety;
 
-namespace EthernetIPSharp.Safety.Tests;
+namespace SRCthird.EthernetIPSharp.Safety.Tests;
 
 public class SafetyNetworkSegmentTests
 {
@@ -117,21 +117,21 @@ public class SafetyNetworkSegmentTests
         };
         segment.Encode(path.AsSpan(8));
 
-        var fwdOpen = new EthernetIPSharp.Connections.ForwardOpenRequest
+        var fwdOpen = new SRCthird.EthernetIPSharp.Connections.ForwardOpenRequest
         {
-            OtoTParams = new EthernetIPSharp.Connections.NetworkConnectionParams
+            OtoTParams = new SRCthird.EthernetIPSharp.Connections.NetworkConnectionParams
             {
                 ConnectionType = 2,
                 ConnectionSize = 100,
             },
-            TtoOParams = new EthernetIPSharp.Connections.NetworkConnectionParams
+            TtoOParams = new SRCthird.EthernetIPSharp.Connections.NetworkConnectionParams
             {
                 ConnectionType = 2,
                 ConnectionSize = 100,
             },
         };
 
-        var result = EthernetIPSharp.Connections.ConnectionPathParser.Parse(path, fwdOpen);
+        var result = SRCthird.EthernetIPSharp.Connections.ConnectionPathParser.Parse(path, fwdOpen);
         Assert.Equal(10u, result.ConfigAssemblyInstance);
         Assert.Equal(100u, result.ConsumedAssemblyInstance);
         Assert.Equal(101u, result.ProducedAssemblyInstance);

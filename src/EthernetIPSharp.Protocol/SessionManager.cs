@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace EthernetIPSharp.Protocol;
+namespace SRCthird.EthernetIPSharp.Protocol;
 
 /// <summary>
 /// Manages EtherNet/IP encapsulation sessions.

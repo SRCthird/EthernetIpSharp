@@ -1,8 +1,8 @@
 using System.Buffers;
 using System.Buffers.Binary;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Logix;
+namespace SRCthird.EthernetIPSharp.Logix;
 
 /// <summary>
 /// CIP service handlers for Logix tag operations:

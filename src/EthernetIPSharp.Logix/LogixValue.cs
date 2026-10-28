@@ -1,4 +1,4 @@
-﻿namespace EthernetIPSharp.Logix;
+﻿namespace SRCthird.EthernetIPSharp.Logix;
 
 internal sealed class LogixValue
 {

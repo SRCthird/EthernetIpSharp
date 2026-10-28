@@ -30,8 +30,8 @@
 
 using System.Net;
 using System.Runtime;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Safety;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Safety;
 
 // Tell the GC to avoid generation 2 collections in the foreground for as long
 // as it can (still runs in background). Belt-and-suspenders for the producer
@@ -99,7 +99,7 @@ int    asmData2           = int.Parse(GetArg("asm-data2", defaultAsmData2.ToStri
 int    asmConfig          = int.Parse(GetArg("asm-config", defaultAsmConfig.ToString()));
 double haltThresholdSec   = double.Parse(GetArg("halt-threshold", "60"));
 int    startupTraceSec    = int.Parse(GetArg("startup-trace", "0"));
-EthernetIPSharp.Safety.SafetyDevice.StartupTraceSeconds = startupTraceSec;
+SRCthird.EthernetIPSharp.Safety.SafetyDevice.StartupTraceSeconds = startupTraceSec;
 
 // ----------------------------------------------------------------------------
 // Build the device identity (what an EtherNet/IP scanner sees in ListIdentity)

@@ -1,9 +1,9 @@
 using System.Buffers.Binary;
 using System.Net;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Protocol.Messages;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Protocol.Messages;
 
-namespace EthernetIPSharp.Protocol;
+namespace SRCthird.EthernetIPSharp.Protocol;
 
 /// <summary>
 /// An active I/O connection from the scanner (originator) side.

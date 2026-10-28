@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace EthernetIPSharp.Logix;
+namespace SRCthird.EthernetIPSharp.Logix;
 
 /// <summary>
 /// In-memory tag database for the Logix simulator.

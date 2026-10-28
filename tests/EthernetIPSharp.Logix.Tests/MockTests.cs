@@ -1,9 +1,9 @@
 using System.Buffers.Binary;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Logix;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Logix;
 using NSubstitute;
 
-namespace EthernetIPSharp.Logix.Tests;
+namespace SRCthird.EthernetIPSharp.Logix.Tests;
 
 /// <summary>
 /// Tests that exercise the Logix dispatcher with mocked dependencies.

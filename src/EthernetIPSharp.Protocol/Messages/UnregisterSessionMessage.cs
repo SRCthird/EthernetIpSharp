@@ -1,7 +1,7 @@
 using System.Net;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Protocol.Messages;
+namespace SRCthird.EthernetIPSharp.Protocol.Messages;
 
 /// <summary>Encapsulation UnregisterSession (0x0066). Header-only. No reply.</summary>
 public sealed class UnregisterSessionMessage : ISerializableMessage

@@ -1,8 +1,8 @@
 using System.Buffers.Binary;
 using System.Net;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Protocol.Messages;
+namespace SRCthird.EthernetIPSharp.Protocol.Messages;
 
 /// <summary>
 /// Encapsulation SendRRData (0x006F). Unconnected explicit messaging (UCMM).

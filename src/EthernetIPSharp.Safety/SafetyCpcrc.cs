@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
-using EthernetIPSharp.Connections;
+using SRCthird.EthernetIPSharp.Connections;
 
-namespace EthernetIPSharp.Safety;
+namespace SRCthird.EthernetIPSharp.Safety;
 
 /// <summary>
 /// Connection Parameter CRC (CPCRC) — CRC-S4 computed over Forward Open fields.

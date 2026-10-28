@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.NetworkInformation;
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 
-namespace EthernetIPSharp.Device;
+namespace SRCthird.EthernetIPSharp.Device;
 
 /// <summary>
 /// CIP Ethernet Link Object (Class 0xF6). Required by EtherNet/IP devices.

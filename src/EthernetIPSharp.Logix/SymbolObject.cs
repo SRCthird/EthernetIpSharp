@@ -1,11 +1,11 @@
-using EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 using System;
 using System.Buffers.Binary;
 using System.IO;
 using System.Xml.Linq;
 using static System.Formats.Asn1.AsnWriter;
 
-namespace EthernetIPSharp.Logix;
+namespace SRCthird.EthernetIPSharp.Logix;
 
 /// <summary>
 /// CIP Symbol Object (Class 0x6B).

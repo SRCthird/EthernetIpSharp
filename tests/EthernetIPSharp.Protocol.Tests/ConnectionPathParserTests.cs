@@ -1,6 +1,6 @@
-using EthernetIPSharp.Connections;
+using SRCthird.EthernetIPSharp.Connections;
 
-namespace EthernetIPSharp.Protocol.Tests;
+namespace SRCthird.EthernetIPSharp.Protocol.Tests;
 
 /// <summary>
 /// Regression coverage for <see cref="ConnectionPathParser"/> — in

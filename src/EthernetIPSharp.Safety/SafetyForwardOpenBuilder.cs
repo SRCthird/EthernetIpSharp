@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
-using EthernetIPSharp.Connections;
+using SRCthird.EthernetIPSharp.Connections;
 
-namespace EthernetIPSharp.Safety;
+namespace SRCthird.EthernetIPSharp.Safety;
 
 /// <summary>
 /// Configuration for establishing a CIP Safety I/O connection via Forward Open.
