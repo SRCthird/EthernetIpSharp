@@ -19,7 +19,6 @@
     <Project Path="packaging/SRCthird.EthernetIPSharp.Nuget/SRCthird.EthernetIPSharp.Nuget.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/CipMessageSniffer/CipMessageSniffer.csproj" />
     <Project Path="tests/SRCthird.EthernetIPSharp.Cip.Tests/SRCthird.EthernetIPSharp.Cip.Tests.csproj" />
     <Project Path="tests/SRCthird.EthernetIPSharp.Logix.Tests/SRCthird.EthernetIPSharp.Logix.Tests.csproj" />
     <Project Path="tests/SRCthird.EthernetIPSharp.Protocol.Tests/SRCthird.EthernetIPSharp.Protocol.Tests.csproj" />
