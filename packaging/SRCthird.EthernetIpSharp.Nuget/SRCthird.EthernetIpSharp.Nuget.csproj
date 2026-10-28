@@ -3,7 +3,7 @@
   <!--
        Rollup packaging project — packs the six library assemblies
        (Cip, Protocol, Connections, Device, Safety, Logix) into a single
-       `EthernetIPSharp` NuGet. Users get the whole stack as one dependency.
+       `SRCthird.EthernetIPSharp` NuGet. Users get the whole stack as one dependency.
 
        Implementation note: we deliberately don't reference the projects as
        ProjectReference and instead let a dependency chain (Logix -> everything)
@@ -23,12 +23,13 @@
 
     <!-- Package identity -->
     <PackageId>SRCthird.EthernetIPSharp</PackageId>
+    <Product>EthernetIPSharp</Product> 
     <Version>1.0.0</Version>
     <Authors>Stephen Chryn</Authors>
     <Company>Merck KGaA, Darmstadt, Germany</Company>
     <Copyright>Copyright (c) 2026 Merck KGaA, Darmstadt, Germany and/or its affiliates</Copyright>
-    <Title>EthernetIPSharp: EtherNet/IP Tag Server, Scanner, Adapter, and CIP Safety for .NET</Title>
-    <Description>A fork of Cristian Mori's EthernetIpSharp updated with the IO of a ControlLogix 5500. An EtherNet/IP and CIP Safety protocol stack for .NET 8: adapter (target), scanner (originator), and Logix-compatible tag client / server. Interop-tested against real Allen-Bradley ControlLogix and 1734 distributed safety I/O.</Description>
+    <Title>EthernetIPSharp: EtherNet/IP CIP Tag Server, Scanner, Adapter, and Safety for .NET</Title>
+    <Description>A fork of Cristian Mori's EthernetIpSharp updated with the IO of a ControlLogix 5500. An EtherNet/IP protocol stack for .NET 8: adapter (target), scanner (originator), and Logix-compatible tag client / server. Interop-tested against real Allen-Bradley ControlLogix and 1734 distributed safety I/O.</Description>
     <PackageTags>ethernet-ip;cip;cip-safety;allen-bradley;controllogix;compactlogix;logix;plc;industrial;automation</PackageTags>
 
     <!-- License, README, source link -->
@@ -52,12 +53,12 @@
        into TfmSpecificPackageFile.
   -->
   <ItemGroup>
-    <ProjectReference Include="..\..\src\EthernetIPSharp.Cip\EthernetIPSharp.Cip.csproj" />
-    <ProjectReference Include="..\..\src\EthernetIPSharp.Protocol\EthernetIPSharp.Protocol.csproj" />
-    <ProjectReference Include="..\..\src\EthernetIPSharp.Connections\EthernetIPSharp.Connections.csproj" />
-    <ProjectReference Include="..\..\src\EthernetIPSharp.Device\EthernetIPSharp.Device.csproj" />
-    <ProjectReference Include="..\..\src\EthernetIPSharp.Safety\EthernetIPSharp.Safety.csproj" />
-    <ProjectReference Include="..\..\src\EthernetIPSharp.Logix\EthernetIPSharp.Logix.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Cip\SRCthird.EthernetIPSharp.Cip.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Protocol\SRCthird.EthernetIPSharp.Protocol.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Connections\SRCthird.EthernetIPSharp.Connections.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Device\SRCthird.EthernetIPSharp.Device.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Safety\SRCthird.EthernetIPSharp.Safety.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Logix\SRCthird.EthernetIPSharp.Logix.csproj" />
   </ItemGroup>
 
   <ItemGroup>
