@@ -1,6 +1,6 @@
 using System.Net;
-using EthernetIPSharp.Protocol;
-using EthernetIPSharp.Safety;
+using SRCthird.EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Safety;
 
 // Target: 1734-ENT adapter with safety modules
 string targetIp = args.Length > 0 ? args[0] : "192.168.1.76";

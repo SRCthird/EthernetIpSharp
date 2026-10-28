@@ -1,0 +1,27 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SRCthird.EthernetIPSharp.Cip/SRCthird.EthernetIPSharp.Cip.csproj" />
+    <Project Path="src/SRCthird.EthernetIPSharp.Connections/SRCthird.EthernetIPSharp.Connections.csproj" />
+    <Project Path="src/SRCthird.EthernetIPSharp.Device/SRCthird.EthernetIPSharp.Device.csproj" />
+    <Project Path="src/SRCthird.EthernetIPSharp.Host/SRCthird.EthernetIPSharp.Host.csproj" />
+    <Project Path="src/SRCthird.EthernetIPSharp.Logix/SRCthird.EthernetIPSharp.Logix.csproj" />
+    <Project Path="src/SRCthird.EthernetIPSharp.Protocol/SRCthird.EthernetIPSharp.Protocol.csproj" />
+    <Project Path="src/SRCthird.EthernetIPSharp.Safety/SRCthird.EthernetIPSharp.Safety.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/SafetyAdapterSample/SafetyAdapterSample.csproj" />
+    <Project Path="samples/StandardAdapterSample/StandardAdapterSample.csproj" />
+    <Project Path="samples/SampleStandardScanner/SampleStandardScanner.csproj" />
+    <Project Path="samples/SampleTag/SampleTag.csproj" />
+    <Project Path="samples/SampleSafetyScanner/SampleSafetyScanner.csproj" />
+  </Folder>
+  <Folder Name="/packaging/">
+    <Project Path="packaging/SRCthird.EthernetIPSharp.Nuget/SRCthird.EthernetIPSharp.Nuget.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SRCthird.EthernetIPSharp.Cip.Tests/SRCthird.EthernetIPSharp.Cip.Tests.csproj" />
+    <Project Path="tests/SRCthird.EthernetIPSharp.Logix.Tests/SRCthird.EthernetIPSharp.Logix.Tests.csproj" />
+    <Project Path="tests/SRCthird.EthernetIPSharp.Protocol.Tests/SRCthird.EthernetIPSharp.Protocol.Tests.csproj" />
+    <Project Path="tests/SRCthird.EthernetIPSharp.Safety.Tests/SRCthird.EthernetIPSharp.Safety.Tests.csproj" />
+  </Folder>
+</Solution>

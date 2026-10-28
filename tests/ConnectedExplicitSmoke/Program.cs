@@ -14,7 +14,7 @@
 //   dotnet run -- [host] [port]
 
 using System.Net;
-using EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Protocol;
 
 string host = args.Length > 0 ? args[0]              : "127.0.0.1";
 int    port = args.Length > 1 ? int.Parse(args[1])   : 44818;

@@ -36,8 +36,8 @@
 // ============================================================================
 
 using System.Net;
-using EthernetIPSharp.Protocol;
-using EthernetIPSharp.Safety;
+using SRCthird.EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Safety;
 
 string GetArg(string key, string defaultValue)
 {

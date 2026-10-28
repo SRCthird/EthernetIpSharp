@@ -8,9 +8,9 @@
 // Usage:  dotnet run -- [<bind>] [<tcp_port>] [<reply_bytes>]
 
 using System.Net;
-using EthernetIPSharp.Cip;
-using EthernetIPSharp.Connections;
-using EthernetIPSharp.Protocol;
+using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Connections;
+using SRCthird.EthernetIPSharp.Protocol;
 
 string bind = args.Length > 0 ? args[0] : "0.0.0.0";
 int    port = args.Length > 1 ? int.Parse(args[1]) : 44818;
