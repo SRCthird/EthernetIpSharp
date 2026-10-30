@@ -179,10 +179,11 @@ public class LogixDispatcher : CipDispatcher
                 symbolicName[(dot + 1)..],
                 serviceCode,
                 data,
-                path);
+                path,
+                symbolicName);
         }
 
-        return DispatchScopedTagService(Tags, symbolicName, serviceCode, data, path);
+        return DispatchScopedTagService(Tags, symbolicName, serviceCode, data, path, symbolicName);
     }
 
     private CipServiceResponse DispatchScopedTagService(
@@ -190,8 +191,10 @@ public class LogixDispatcher : CipDispatcher
         string symbolicName,
         byte serviceCode,
         ReadOnlyMemory<byte> data,
-        CipPath path)
+        CipPath path,
+        string? fullPath = null)
     {
+        fullPath ??= symbolicName;
         if (ReferenceEquals(database, Tags) &&
             _symbolCache.TryGetValue(symbolicName, out var exactCached))
         {
@@ -228,11 +231,15 @@ public class LogixDispatcher : CipDispatcher
         if (dot < 0)
             return DispatchTagService(tag, serviceCode, data, path);
 
+        string memberPath = symbolicName[(dot + 1)..];
+        string rootFullPath = GetMemberRootPath(fullPath, memberPath, rootName);
+
         if (!TryResolveMember(
                 database,
                 tag,
-                symbolicName[(dot + 1)..],
+                memberPath,
                 path,
+                rootFullPath,
                 out var value))
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.UnknownDestination));
 
@@ -247,11 +254,22 @@ public class LogixDispatcher : CipDispatcher
         };
     }
 
+    private static string GetMemberRootPath(string fullPath, string memberPath, string fallback)
+    {
+        int rootPathLength = fullPath.Length - memberPath.Length - 1;
+        if (rootPathLength< 0 || fullPath[rootPathLength] != '.')
+            return fallback;
+
+        return fullPath[..rootPathLength];
+    }
+
+
     private bool TryResolveMember(
         ITagDatabase database,
         Tag tag,
         string memberPath,
         CipPath path,
+        string rootFullPath,
         out LogixValue value)
     {
         value = null!;
@@ -264,7 +282,7 @@ public class LogixDispatcher : CipDispatcher
             return false;
 
         if (memberPath.Contains('.'))
-            return TryResolveNestedMember(tag, template, memberPath, path, out value);
+            return TryResolveNestedMember(tag, template, memberPath, path, rootFullPath, out value);
 
 
         var member = template.Members.FirstOrDefault(
@@ -276,12 +294,15 @@ public class LogixDispatcher : CipDispatcher
         int rootIndex = 0;
         int memberIndex = 0;
         int elementCursor = 0;
+        bool memberIndexSelected = false;
+        string fullMemberPath = rootFullPath;
 
         if (tag.ElementCount > 1)
         {
             if (elementCursor >= elementIds.Count || elementIds[elementCursor] > int.MaxValue)
                 return false;
             rootIndex = (int)elementIds[elementCursor++];
+            fullMemberPath = $"{rootFullPath}[{rootIndex}]";
         }
 
         int memberCount = member.DataType == LogixDataTypes.BOOL ? 1 : Math.Max(1, member.ArraySize);
@@ -291,6 +312,7 @@ public class LogixDispatcher : CipDispatcher
             if (elementCursor >= elementIds.Count || elementIds[elementCursor] > int.MaxValue)
                 return false;
             memberIndex = (int)elementIds[elementCursor++];
+            memberIndexSelected = true;
         }
 
         if (elementCursor != elementIds.Count)
@@ -305,7 +327,11 @@ public class LogixDispatcher : CipDispatcher
         // Convert the member element index into the member view once. The
         // service handlers must never receive the root array index; the root
         // index is already embedded in resolved.MemberOffset/base offset.
-        value = new LogixValue(tag, member, rootIndex, memberIndex);
+        fullMemberPath += $".{member.Name}";
+        if (memberIndexSelected)
+            fullMemberPath += $"[{memberIndex}]";
+        
+        value = new LogixValue(tag, member, rootIndex, memberIndex, fullMemberPath);
 
         return true;
     }
@@ -315,6 +341,7 @@ public class LogixDispatcher : CipDispatcher
         TemplateDefinition rootTemplate,
         string memberPath,
         CipPath path,
+        string rootFullPath,
         out LogixValue value)
     {
         value = null!;
@@ -324,12 +351,14 @@ public class LogixDispatcher : CipDispatcher
         var elementIds = path.ElementIds ?? Array.Empty<uint>();
         int elementCursor = 0;
         int rootIndex = 0;
+        string fullMemberPath = rootFullPath;
 
         if (tag.ElementCount > 1)
         {
             if (elementCursor >= elementIds.Count || elementIds[elementCursor] > int.MaxValue)
                 return false;
             rootIndex = (int)elementIds[elementCursor++];
+            fullMemberPath = $"{rootFullPath}[{rootIndex}]";
         }
 
         int relativeOffset = 0;
@@ -349,6 +378,7 @@ public class LogixDispatcher : CipDispatcher
                 ? 1
                 : Math.Max(1, member.ArraySize);
             int memberIndex = 0;
+            bool memberElementSelected = false;
 
             // A nested array must be indexed before descending. A leaf array
             // may be read as a whole, or indexed when an element segment is
@@ -359,6 +389,7 @@ public class LogixDispatcher : CipDispatcher
                     return false;
                 memberIndex = (int)elementIds[elementCursor++];
                 if (memberIndex >= memberCount) return false;
+                memberElementSelected = true;
                 leafElementSelected = isLast;
                 if (isLast)
                 {
@@ -370,6 +401,11 @@ public class LogixDispatcher : CipDispatcher
 
             relativeOffset = checked(relativeOffset + member.Offset
                 + memberIndex * member.ElementSize);
+
+            fullMemberPath += $".{member.Name}";
+            if (memberElementSelected)
+                fullMemberPath += $"[{memberIndex}]";
+
 
             if (isLast)
             {
@@ -393,7 +429,7 @@ public class LogixDispatcher : CipDispatcher
             : (leafElementSelected ? leaf.ArraySize - leafElementIndex : leaf.ArraySize);
         var resolved = new TemplateMemberInfo(
             leaf.Name, leaf.DataType, relativeOffset, arraySize, leaf.ElementSize);
-        value = new LogixValue(tag, resolved, rootIndex);
+        value = new LogixValue(tag, resolved, rootIndex, fullPath: fullMemberPath);
         return true;
     }
 
