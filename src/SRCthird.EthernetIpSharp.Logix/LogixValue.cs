@@ -11,6 +11,7 @@ internal sealed class LogixValue
     public int MemberOffset { get; }
     public ushort TagType { get; }
     public string FullPath { get; }
+    public ushort? MemberDataType { get; }
     public int ElementSize { get; }
     public int ElementCount { get; }
     public int DataSize => ElementSize * ElementCount;
@@ -25,6 +26,7 @@ internal sealed class LogixValue
         TagType = tag.TagType;
         ElementSize = tag.ElementSize;
         ElementCount = tag.ElementCount;
+        MemberDataType = null;
     }
 
     public LogixValue(Tag root, TemplateMemberInfo member, int rootElementIndex, int memberElementIndex = 0, string? fullPath = null)
@@ -35,6 +37,7 @@ internal sealed class LogixValue
 
         _root = root;
         FullPath = fullPath ?? root.Name;
+        MemberDataType = member.DataType;
         if ((uint)rootElementIndex >= (uint)root.ElementCount)
             throw new ArgumentOutOfRangeException(nameof(rootElementIndex));
         RootElementIndex = rootElementIndex;
@@ -70,7 +73,7 @@ internal sealed class LogixValue
 
         if (!_isBool)
         {
-            _root.SetData(source, _baseOffset + byteOffset, FullPath);
+            _root.SetData(source, _baseOffset + byteOffset, FullPath, MemberDataType);
             return;
         }
 
@@ -80,6 +83,6 @@ internal sealed class LogixValue
         byte host = _root.GetData(_baseOffset, 1)[0];
         byte mask = (byte)(1 << _boolBit);
         host = source[0] == 0 ? (byte)(host & ~mask) : (byte)(host | mask);
-        _root.SetData([host], _baseOffset, FullPath);
+        _root.SetData([host], _baseOffset, FullPath, MemberDataType);
     }
 }

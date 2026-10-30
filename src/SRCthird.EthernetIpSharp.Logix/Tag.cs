@@ -80,11 +80,11 @@ public sealed class Tag
     }
 
     /// <summary>Bulk write into the tag data buffer. Fires ValueChanged once.</summary>
-    public void SetData(ReadOnlySpan<byte> source, int byteOffset = 0, string? fullPath = null)
+    public void SetData(ReadOnlySpan<byte> source, int byteOffset = 0, string? fullPath = null, ushort? memberDataType = null)
     {
         int len = Math.Min(source.Length, _data.Length - byteOffset);
         source.Slice(0, len).CopyTo(_data.AsSpan(byteOffset));
-        ValueChanged?.Invoke(this, new TagChangeInfo(byteOffset, len, fullPath ?? Name));
+        ValueChanged?.Invoke(this, new TagChangeInfo(byteOffset, len, fullPath ?? Name, memberDataType));
     }
 
     public override string ToString() => $"{Name} ({ElementCount}x{ElementSize}B, type=0x{TagType:X4})";
@@ -187,9 +187,13 @@ public readonly struct TagChangeInfo
     /// <summary>Symbolic path of the value that was written (root tag for whole-tag writes).</summary>
     public string FullPath { get; }
 
-    public TagChangeInfo(int byteOffset, int byteLength, string? fullPath = null)
+    /// <summary>CIP type code of the UDT member written, or null when no single member type applies.</summary>
+    public ushort? MemberDataType { get; }
+
+    public TagChangeInfo(int byteOffset, int byteLength, string? fullPath = null, ushort? memberDataType = null)
     {
         FullPath = fullPath ?? string.Empty;
+        MemberDataType = memberDataType;
         ByteOffset = byteOffset;
         ByteLength = byteLength;
     }
