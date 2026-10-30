@@ -55,7 +55,7 @@ public sealed class ProgramObject
         var program = new ProgramDefinition(
             instanceId: ProgramInstanceBase + programNumber,
             name: name,
-            firstTagInstanceId: checked(programNumber * 0x10000u),
+            firstTagInstanceId: 0,
             firstTemplateId: checked(0x100 + (int)programNumber * 0x100));
 
         _programs.Add(name, program);
