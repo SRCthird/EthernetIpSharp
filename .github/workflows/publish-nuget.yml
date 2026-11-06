@@ -1,0 +1,57 @@
+name: Publish NuGet
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Test
+        run: dotnet test SRCthird.EthernetIpSharp.slnx --configuration Release
+
+      - name: Pack
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Tag must look like v1.2.3 (optionally with a prerelease suffix)." >&2
+            exit 1
+          fi
+
+          dotnet pack \
+            packaging/SRCthird.EthernetIpSharp.Nuget/SRCthird.EthernetIpSharp.Nuget.csproj \
+            --configuration Release \
+            --property:PackageVersion="$VERSION"
+
+      - name: NuGet Trusted Publishing login
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Push to NuGet.org
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: |
+          dotnet nuget push artifacts/nuget/*.nupkg \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
