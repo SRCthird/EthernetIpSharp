@@ -24,7 +24,7 @@
     <!-- Package identity -->
     <PackageId>SRCthird.EthernetIPSharp</PackageId>
     <Product>EthernetIPSharp</Product> 
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Authors>Stephen Chryn</Authors>
     <Company>Merck KGaA, Darmstadt, Germany</Company>
     <Copyright>Copyright (c) 2026 Merck KGaA, Darmstadt, Germany and/or its affiliates</Copyright>
