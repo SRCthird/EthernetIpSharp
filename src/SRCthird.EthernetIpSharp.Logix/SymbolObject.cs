@@ -20,6 +20,10 @@ public sealed class SymbolObject
 
     /// <summary>Service code for Get_Instance_Attribute_List.</summary>
     public const byte GetInstanceAttributeList = 0x55;
+    private const byte ExternalAccessNone = 0x00;
+    private const byte ExternalAccessReadOnly = 0x01;
+    private const byte ExternalAccessWriteOnly = 0x02;
+    private const byte ExternalAccessReadWrite = 0x03;
 
     private readonly ITagDatabase _tags;
     private readonly Func<string?, ITagDatabase?> _scopeResolver;
@@ -265,8 +269,14 @@ public sealed class SymbolObject
                             buffer.AsSpan(offset), (ushort)tag.ElementSize);
                         offset += 2;
                         break;
-                    case 10:   // External Access (USINT). 3 = Read/Write.
-                        buffer[offset++] = 0x03;
+                    case 10:   // External Access (USINT).
+                        buffer[offset++] = tag.DisableRead
+                            ? (tag.DisableWrite
+                                ? ExternalAccessNone
+                                : ExternalAccessWriteOnly)
+                            : (tag.DisableWrite
+                                ? ExternalAccessReadOnly
+                                : ExternalAccessReadWrite);
                         break;
                 }
             }
@@ -295,6 +305,6 @@ public sealed class SymbolObject
         name: $"Program:{program.Name}",
         symbolType: LogixDataTypes.DINT,
         tagType: LogixDataTypes.DINT,
-        elementSize: LogixDataTypes.GetElementSize(LogixDataTypes.DINT));
+        elementSize: CipDataTypeCast.GetFixedSize(LogixDataTypes.DINT));
 
 }

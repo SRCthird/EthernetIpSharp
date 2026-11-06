@@ -234,6 +234,9 @@ public class LogixDispatcher : CipDispatcher
         string memberPath = symbolicName[(dot + 1)..];
         string rootFullPath = GetMemberRootPath(fullPath, memberPath, rootName);
 
+        if (IsReadService(serviceCode) && IsReadDisabledStructuredMember(database, tag, memberPath))
+            return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
+
         if (!TryResolveMember(
                 database,
                 tag,
@@ -252,6 +255,51 @@ public class LogixDispatcher : CipDispatcher
             TagServices.ReadModifyWrite => MemberTagServices.ReadModifyWrite(value, serviceCode, data),
             _ => CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.UnsupportedService)),
         };
+    }
+
+    private static bool IsReadService(byte serviceCode) =>
+    serviceCode is TagServices.ReadTag
+        or TagServices.ReadTagFragmented
+        or TagServices.ReadModifyWrite;
+
+    private static bool IsReadDisabledStructuredMember(
+        ITagDatabase database, Tag tag, string memberPath)
+    {
+        if (!LogixDataTypes.IsStruct(tag.SymbolType))
+            return false;
+
+        var template = database.FindTemplate(LogixDataTypes.GetTemplateId(tag.SymbolType));
+        if (template == null)
+            return false;
+
+        var parts = memberPath.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+            return false;
+
+        var current = template;
+        bool inheritedDisableRead = tag.DisableRead;
+
+        for (int i = 0; i < parts.Length; i++)
+        {
+            var member = current.Members.FirstOrDefault(
+                m => string.Equals(m.Name, parts[i], StringComparison.OrdinalIgnoreCase));
+            if (string.IsNullOrEmpty(member.Name))
+                return false;
+
+            inheritedDisableRead |= member.DisableRead;
+
+            if (i == parts.Length - 1)
+                return inheritedDisableRead ||
+                       (member.NestedTemplate != null &&
+                        TagDatabase.TemplateHasReadDisabledMembers(member.NestedTemplate));
+
+            if (member.NestedTemplate == null)
+                return false;
+
+            current = member.NestedTemplate;
+        }
+
+        return false;
     }
 
     private static string GetMemberRootPath(string fullPath, string memberPath, string fallback)
@@ -287,7 +335,7 @@ public class LogixDispatcher : CipDispatcher
 
         var member = template.Members.FirstOrDefault(
             m => string.Equals(m.Name, memberPath, StringComparison.OrdinalIgnoreCase));
-        if (member.Name == null || LogixDataTypes.GetElementSize(member.DataType) <= 0)
+        if (member.Name == null || CipDataTypeCast.GetFixedSize(member.DataType) <= 0)
             return false;
 
         var elementIds = path.ElementIds ?? Array.Empty<uint>();
@@ -366,6 +414,8 @@ public class LogixDispatcher : CipDispatcher
         TemplateMemberInfo leaf = default;
         bool leafElementSelected = false;
         int leafElementIndex = 0;
+        bool disableWrite = false;
+        bool disableRead = false;
 
         for (int partIndex = 0; partIndex < parts.Length; partIndex++)
         {
@@ -374,6 +424,8 @@ public class LogixDispatcher : CipDispatcher
                 m => string.Equals(m.Name, parts[partIndex], StringComparison.OrdinalIgnoreCase));
             if (string.IsNullOrEmpty(member.Name)) return false;
 
+            disableWrite |= member.DisableWrite;
+            disableRead |= member.DisableRead;
             int memberCount = member.DataType == LogixDataTypes.BOOL
                 ? 1
                 : Math.Max(1, member.ArraySize);
@@ -419,7 +471,7 @@ public class LogixDispatcher : CipDispatcher
 
         if (elementCursor != elementIds.Count || leaf.NestedTemplate != null)
             return false;
-        if (LogixDataTypes.GetElementSize(leaf.DataType) <= 0)
+        if (CipDataTypeCast.GetFixedSize(leaf.DataType) <= 0)
             return false;
         if (rootIndex < 0 || rootIndex >= tag.ElementCount)
             return false;
@@ -427,8 +479,11 @@ public class LogixDispatcher : CipDispatcher
         int arraySize = leaf.DataType == LogixDataTypes.BOOL
             ? leaf.ArraySize
             : (leafElementSelected ? leaf.ArraySize - leafElementIndex : leaf.ArraySize);
+        disableWrite |= leaf.HasWriteDisabledMembers;
+        disableRead |= leaf.HasReadDisabledMembers;
         var resolved = new TemplateMemberInfo(
-            leaf.Name, leaf.DataType, relativeOffset, arraySize, leaf.ElementSize);
+            leaf.Name, leaf.DataType, relativeOffset, arraySize, leaf.ElementSize, leaf.NestedTemplate,
+            disableWrite, disableRead, leaf.HasReadDisabledMembers, leaf.HasWriteDisabledMembers);
         value = new LogixValue(tag, resolved, rootIndex, fullPath: fullMemberPath);
         return true;
     }

@@ -1,3 +1,4 @@
+using SRCthird.EthernetIPSharp.Cip;
 using System.Collections.Concurrent;
 
 namespace SRCthird.EthernetIPSharp.Logix;
@@ -32,9 +33,9 @@ public sealed class TagDatabase : ITagDatabase
     public event Action<TemplateDefinition>? TemplateAdded;
 
     /// <summary>Add an atomic tag.</summary>
-    public Tag AddTag(string name, ushort tagType, int elementCount = 1)
+    public Tag AddTag(string name, ushort tagType, int elementCount = 1, bool disableWrite = false, bool disableRead = false)
     {
-        int elementSize = LogixDataTypes.GetElementSize(tagType);
+        int elementSize = CipDataTypeCast.GetFixedSize(tagType);
         if (elementSize < 0)
             throw new ArgumentException($"Unknown tag type 0x{tagType:X4}", nameof(tagType));
 
@@ -47,7 +48,10 @@ public sealed class TagDatabase : ITagDatabase
             symbolType: symbolType,
             tagType: tagType,
             elementSize: elementSize,
-            elementCount: elementCount);
+            elementCount: elementCount,
+            disableWrite: disableWrite,
+            disableRead: disableRead);
+
 
         RegisterTag(tag);
         Interlocked.Increment(ref _structureVersion);
@@ -55,7 +59,7 @@ public sealed class TagDatabase : ITagDatabase
     }
 
     /// <summary>Add a structured tag backed by a template.</summary>
-    public Tag AddTag(string name, TemplateDefinition template, int elementCount = 1)
+    public Tag AddTag(string name, TemplateDefinition template, int elementCount = 1, bool disableWrite = false, bool disableRead = false)
     {
         int arrayDims = elementCount > 1 ? 1 : 0;
         ushort symbolType = LogixDataTypes.MakeStructSymbolType(template.InstanceId, arrayDims);
@@ -66,11 +70,29 @@ public sealed class TagDatabase : ITagDatabase
             symbolType: symbolType,
             tagType: template.StructureHandle,
             elementSize: (int)template.StructureSize,
-            elementCount: elementCount);
+            elementCount: elementCount,
+            disableWrite: disableWrite,
+            disableRead: disableRead,
+            hasWriteDisabledMembers: TemplateHasWriteDisabledMembers(template),
+            hasReadDisabledMembers: TemplateHasReadDisabledMembers(template));
 
         RegisterTag(tag);
         Interlocked.Increment(ref _structureVersion);
         return tag;
+    }
+
+    public static bool TemplateHasWriteDisabledMembers(TemplateDefinition template)
+    {
+        return template.Members.Any(member =>
+            member.DisableWrite ||
+            (member.NestedTemplate != null && TemplateHasWriteDisabledMembers(member.NestedTemplate)));
+    }
+
+    public static bool TemplateHasReadDisabledMembers(TemplateDefinition template)
+    {
+        return template.Members.Any(member =>
+            member.DisableRead ||
+            (member.NestedTemplate != null && TemplateHasReadDisabledMembers(member.NestedTemplate)));
     }
 
     private void RegisterTag(Tag tag)
@@ -198,7 +220,8 @@ public sealed class TagDatabase : ITagDatabase
 
                 // Add BOOL at current bit position within the host byte.
                 // ArraySize field stores bit position for BOOLs (matches PLC template Info field).
-                resolvedMembers.Add(new TemplateMemberInfo(m.Name, LogixDataTypes.BOOL, boolHostOffset, boolBitPos, 0));
+                resolvedMembers.Add(new TemplateMemberInfo(m.Name, LogixDataTypes.BOOL, boolHostOffset, boolBitPos, 0,
+                    disableWrite: m.DisableWrite, disableRead: m.DisableRead));
                 boolBitPos++;
             }
             else
@@ -209,19 +232,20 @@ public sealed class TagDatabase : ITagDatabase
 
                 int elemSize = m.NestedTemplate != null
                     ? checked((int)m.NestedTemplate.StructureSize)
-                    : LogixDataTypes.GetElementSize(m.DataType);
+                    : CipDataTypeCast.GetFixedSize(m.DataType);
 
                 if (elemSize <= 0) elemSize = 4; // Default for unknown/struct types
 
                 // Alignment based on data type
-                int alignment = LogixDataTypes.GetElementSize(m.DataType);
+                int alignment = CipDataTypeCast.GetFixedSize(m.DataType);
                 if (alignment <= 0)
                     alignment = Math.Min(elemSize, 4);
                 offset = Align(offset, alignment);
 
                 int memberSize = m.ArraySize > 0 ? elemSize * m.ArraySize : elemSize;
 
-                resolvedMembers.Add(new TemplateMemberInfo(m.Name, m.DataType, offset, m.ArraySize, elemSize, m.NestedTemplate));
+                resolvedMembers.Add(new TemplateMemberInfo(m.Name, m.DataType, offset, m.ArraySize, elemSize, m.NestedTemplate,
+                    disableWrite: m.DisableWrite, disableRead: m.DisableRead));
                 offset += memberSize;
             }
         }
@@ -272,23 +296,32 @@ public readonly struct TemplateMember
     /// <summary>Array size (0 for scalar members).</summary>
     public int ArraySize { get; }
 
+    public bool DisableWrite { get; }
+    public bool DisableRead { get; }
+
     public TemplateDefinition? NestedTemplate { get; }
 
-    public TemplateMember(string name, ushort dataType, int arraySize = 0)
+    public TemplateMember(string name, ushort dataType, int arraySize = 0,
+        bool disableWrite = false, bool disableRead = false)
     {
         Name = name;
         DataType = dataType;
         NestedTemplate = null;
         ArraySize = arraySize;
+        DisableWrite = disableWrite;
+        DisableRead = disableRead;
     }
 
-    public TemplateMember(string name, TemplateDefinition template, int arraySize = 0)
+    public TemplateMember(string name, TemplateDefinition template, int arraySize = 0,
+        bool disableWrite = false, bool disableRead = false)
     {
         ArgumentNullException.ThrowIfNull(template);
         Name = name;
         DataType = template.StructureHandle;
         NestedTemplate = template;
         ArraySize = arraySize;
+        DisableWrite = disableWrite;
+        DisableRead = disableRead;
     }
 }
 
@@ -313,10 +346,17 @@ public readonly struct TemplateMemberInfo
     /// <summary>Size of one element in bytes.</summary>
     public int ElementSize { get; }
 
+    public bool DisableWrite { get; }
+    public bool DisableRead { get; }
+    public bool HasWriteDisabledMembers { get; }
+    public bool HasReadDisabledMembers { get; }
+
     public TemplateDefinition? NestedTemplate { get; }
 
     public TemplateMemberInfo(string name, ushort dataType, int offset, int arraySize,
-        int elementSize, TemplateDefinition? nestedTemplate = null)
+        int elementSize, TemplateDefinition? nestedTemplate = null,
+        bool disableWrite = false, bool hasWriteDisabledMembers = false,
+        bool disableRead = false, bool hasReadDisabledMembers = false)
     {
         Name = name;
         DataType = dataType;
@@ -324,6 +364,10 @@ public readonly struct TemplateMemberInfo
         ArraySize = arraySize;
         ElementSize = elementSize;
         NestedTemplate = nestedTemplate;
+        DisableWrite = disableWrite;
+        DisableRead = disableRead;
+        HasWriteDisabledMembers = hasWriteDisabledMembers;
+        HasReadDisabledMembers = hasReadDisabledMembers;
     }
 }
 

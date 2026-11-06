@@ -182,6 +182,32 @@ await adapter.ListenAsync(IPAddress.Parse("0.0.0.0"), 44818);
 
 `0.0.0.0` binds to all local IPv4 interfaces. For local-only testing, bind to `IPAddress.Loopback`; for a networked test, use the host's assigned address and restrict access with your firewall. See [`Program.cs`](samples/LogixHost/Program.cs) for the full runnable setup.
 
+#### Logix tag read/write access controls
+
+`AddTag` and `TemplateMember` support independent `disableWrite` and `disableRead` options. Both default to `false`, so tags are readable and writable unless you opt into a restriction.
+
+```csharp
+// A read-only tag: Logix clients can read it but cannot write it.
+logix.Tags.AddTag("OperatorSetpoint", LogixDataTypes.REAL, disableWrite: true);
+
+// A write-only tag: Logix clients can write it but cannot read it.
+logix.Tags.AddTag("CommandMailbox", LogixDataTypes.DINT, disableRead: true);
+
+var accessTemplate = logix.Tags.AddTemplate(
+    "AccessExample",
+    new TemplateMember("Status", LogixDataTypes.DINT),
+    new TemplateMember("ProtectedSetting", LogixDataTypes.DINT, disableWrite: true),
+    new TemplateMember("WriteOnlyCommand", LogixDataTypes.DINT, disableRead: true));
+
+logix.Tags.AddTag("AccessExampleTag", accessTemplate);
+```
+
+These options control requests received by the Logix tag server; they do not prevent application code from using the tag's local `Read` and `Write` methods.
+
+- `disableWrite: true` rejects Logix write services for that tag or member. A whole-UDT write is also rejected when the UDT contains a write-disabled member, so it cannot overwrite that member indirectly.
+- `disableRead: true` rejects Logix reads for that tag or member. A read-disabled member also protects its descendants. Whole-UDT reads are rejected when the UDT contains a read-disabled member, while reads of unprotected sibling members remain available.
+- The restrictions are independent. A member may be read-disabled, write-disabled, both, or neither. Read-modify-write requests are rejected when they conflict with the applicable restriction.
+
 #### Tag Database storage
 
 `TagDatabase` is the default in-memory implementation of `ITagDatabase`. It stores tags by name and Symbol Object instance ID, and stores the UDT templates needed to describe structured tags. Use `AddTag` for atomic values and arrays, `AddTemplate` for UDTs, and `AddStringType` for a Logix `STRING`-family structure. In this model, a Logix `STRING` is a template with a `LEN` DINT and a `DATA` SINT array, not an atomic `LogixDataTypes` value. The default database does not persist values after the process exits; `LogixDispatcher` can accept another `ITagDatabase` implementation when an application needs different storage.

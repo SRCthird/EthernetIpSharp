@@ -1,8 +1,12 @@
-﻿namespace SRCthird.EthernetIPSharp.Logix;
+using SRCthird.EthernetIPSharp.Cip;
+
+namespace SRCthird.EthernetIPSharp.Logix;
 
 internal sealed class LogixValue
 {
     private readonly Tag _root;
+    private readonly bool _memberDisableWrite;
+    private readonly bool _memberDisableRead;
     private readonly int _baseOffset;
     private readonly bool _isBool;
     private readonly int _boolBit;
@@ -15,12 +19,16 @@ internal sealed class LogixValue
     public int ElementSize { get; }
     public int ElementCount { get; }
     public int DataSize => ElementSize * ElementCount;
+    public bool DisableWrite => _root.DisableWrite || _memberDisableWrite;
+    public bool DisableRead => _root.DisableRead || _memberDisableRead;
 
     public bool IsArray => ElementCount > 1;
 
     public LogixValue(Tag tag)
     {
         _root = tag;
+        _memberDisableWrite = false;
+        _memberDisableRead = false;
         RootElementIndex = 0;
         MemberOffset = 0;
         TagType = tag.TagType;
@@ -36,17 +44,19 @@ internal sealed class LogixValue
             throw new ArgumentOutOfRangeException(nameof(memberElementIndex));
 
         _root = root;
+        _memberDisableWrite = member.DisableWrite;
+        _memberDisableRead = member.DisableRead;
         FullPath = fullPath ?? root.Name;
         MemberDataType = member.DataType;
         if ((uint)rootElementIndex >= (uint)root.ElementCount)
             throw new ArgumentOutOfRangeException(nameof(rootElementIndex));
         RootElementIndex = rootElementIndex;
-        MemberOffset = checked(member.Offset + memberElementIndex * LogixDataTypes.GetElementSize(member.DataType));
+        MemberOffset = checked(member.Offset + memberElementIndex * CipDataTypeCast.GetFixedSize(member.DataType));
         _baseOffset = checked(rootElementIndex * root.ElementSize + MemberOffset);
         _isBool = member.DataType == LogixDataTypes.BOOL;
         _boolBit = member.ArraySize;
         TagType = member.DataType;
-        ElementSize = LogixDataTypes.GetElementSize(member.DataType);
+        ElementSize = CipDataTypeCast.GetFixedSize(member.DataType);
         if (ElementSize <= 0)
             throw new ArgumentException("UDT member is not an atomic Logix value.", nameof(member));
         ElementCount = _isBool ? 1 : Math.Max(1, member.ArraySize);

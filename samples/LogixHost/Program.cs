@@ -1,5 +1,4 @@
 using System.Net;
-using System.Reflection.Metadata;
 using System.Text;
 
 using SRCthird.EthernetIPSharp.Cip;
@@ -36,19 +35,19 @@ var motorStatusTemplate = logix.Tags.AddTemplate(
     new TemplateMember("Faulted", LogixDataTypes.BOOL),
     new TemplateMember("Speed", LogixDataTypes.REAL),
     new TemplateMember("CycleCount", LogixDataTypes.DINT),
-    new TemplateMember("heaters", heaterTemplate, arraySize: 4),
+    new TemplateMember("heaters", heaterTemplate, arraySize: 4, disableWrite: true),
     new TemplateMember("Asset", stringTemplate)
 );
 
 // Add program
 var mainProgram = logix.AddProgram("MAINPROGRAM");
-mainProgram.Tags.AddTag("DINT", LogixDataTypes.DINT, elementCount: 4);
+mainProgram.Tags.AddTag("DINT", LogixDataTypes.DINT, elementCount: 4, disableWrite: true);
 mainProgram.Tags.AddTag("MOTOR", motorStatusTemplate);
 
 // Add test tags
-logix.Tags.AddTag("BOOL", LogixDataTypes.BOOL);
-logix.Tags.AddTag("SINT", LogixDataTypes.SINT);
-logix.Tags.AddTag("INT", LogixDataTypes.INT);
+logix.Tags.AddTag("BOOL", LogixDataTypes.BOOL, disableWrite: true);
+logix.Tags.AddTag("SINT", LogixDataTypes.SINT, disableRead: true);
+logix.Tags.AddTag("INT", LogixDataTypes.INT, disableRead: true, disableWrite: true);
 logix.Tags.AddTag("DINT", LogixDataTypes.DINT);
 logix.Tags.AddTag("LINT", LogixDataTypes.LINT);
 logix.Tags.AddTag("USINT", LogixDataTypes.USINT);
@@ -92,7 +91,7 @@ void Tags_AnyTagChanged(Tag tag, TagChangeInfo change)
 
     var data = new List<object?>();
     int elemSize = change.MemberDataType is ushort memberType
-        ? LogixDataTypes.GetElementSize(memberType)
+        ? CipDataTypeCast.GetFixedSize(memberType)
         : tag.ElementSize;
 
     if (change.FullPath.EndsWith(".DATA", StringComparison.OrdinalIgnoreCase) &&

@@ -1,4 +1,4 @@
-﻿using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 using System.Buffers;
 using System.Buffers.Binary;
 
@@ -11,6 +11,9 @@ internal static class MemberTagServices
     public static CipServiceResponse Read(
         LogixValue value, byte serviceCode, ReadOnlyMemory<byte> data, int elementOffset)
     {
+        if (value.DisableRead)
+            return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
+
         if (data.Length < 2)
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
@@ -33,6 +36,9 @@ internal static class MemberTagServices
     public static CipServiceResponse Write(
         LogixValue value, byte serviceCode, ReadOnlyMemory<byte> data, int elementOffset)
     {
+        if (value.DisableWrite)
+            return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
+
         if (data.Length < 4)
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
@@ -56,6 +62,9 @@ internal static class MemberTagServices
     public static CipServiceResponse ReadFragmented(
         LogixValue value, byte serviceCode, ReadOnlyMemory<byte> data, int elementOffset)
     {
+        if (value.DisableRead)
+            return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
+
         if (data.Length < 6 || elementOffset < 0)
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
@@ -81,6 +90,9 @@ internal static class MemberTagServices
     public static CipServiceResponse WriteFragmented(
         LogixValue value, byte serviceCode, ReadOnlyMemory<byte> data, int elementOffset)
     {
+        if (value.DisableWrite)
+            return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
+
         if (data.Length < 8 || elementOffset < 0)
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
@@ -137,6 +149,9 @@ internal static class MemberTagServices
     public static CipServiceResponse ReadModifyWrite(
     LogixValue value, byte serviceCode, ReadOnlyMemory<byte> data)
     {
+        if (value.DisableRead || value.DisableWrite)
+            return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
+
         if (data.Length < 2)
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
