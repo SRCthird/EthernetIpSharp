@@ -84,7 +84,7 @@ public static class TagServices
     public static CipServiceResponse HandleWriteTag(Tag tag, byte serviceCode, ReadOnlyMemory<byte> data,
         int elementOffset = 0)
     {
-        if (tag.IsReadOnly || tag.HasReadOnlyMembers)
+        if (tag.DisableWrite || tag.HasWriteDisabledMembers)
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
 
         var span = data.Span;
@@ -229,7 +229,7 @@ public static class TagServices
         ReadOnlyMemory<byte> data,
         int elementOffset = 0)
     {
-        if (tag.IsReadOnly || tag.HasReadOnlyMembers)
+        if (tag.DisableWrite || tag.HasWriteDisabledMembers)
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
 
         int typeSize = TypeParameterSize(tag);
@@ -274,7 +274,7 @@ public static class TagServices
     /// </summary>
     public static CipServiceResponse HandleReadModifyWrite(Tag tag, byte serviceCode, ReadOnlyMemory<byte> data)
     {
-        if (tag.IsReadOnly || tag.HasReadOnlyMembers)
+        if (tag.DisableWrite || tag.HasWriteDisabledMembers)
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
 
         if (data.Length < 2)

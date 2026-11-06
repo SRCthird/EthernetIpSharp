@@ -1,4 +1,4 @@
-﻿using SRCthird.EthernetIPSharp.Cip;
+using SRCthird.EthernetIPSharp.Cip;
 using System.Buffers;
 using System.Buffers.Binary;
 
@@ -33,7 +33,7 @@ internal static class MemberTagServices
     public static CipServiceResponse Write(
         LogixValue value, byte serviceCode, ReadOnlyMemory<byte> data, int elementOffset)
     {
-        if (value.IsReadOnly)
+        if (value.DisableWrite)
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
 
         if (data.Length < 4)
@@ -84,7 +84,7 @@ internal static class MemberTagServices
     public static CipServiceResponse WriteFragmented(
         LogixValue value, byte serviceCode, ReadOnlyMemory<byte> data, int elementOffset)
     {
-        if (value.IsReadOnly)
+        if (value.DisableWrite)
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
 
         if (data.Length < 8 || elementOffset < 0)
@@ -143,7 +143,7 @@ internal static class MemberTagServices
     public static CipServiceResponse ReadModifyWrite(
     LogixValue value, byte serviceCode, ReadOnlyMemory<byte> data)
     {
-        if (value.IsReadOnly)
+        if (value.DisableWrite)
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
 
         if (data.Length < 2)

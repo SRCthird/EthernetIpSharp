@@ -269,7 +269,7 @@ public sealed class SymbolObject
                         offset += 2;
                         break;
                     case 10:   // External Access (USINT).
-                        buffer[offset++] = tag.IsReadOnly 
+                        buffer[offset++] = tag.DisableWrite 
                             ? ExternalAccessReadOnly 
                             : ExternalAccessReadWrite;
                         break;

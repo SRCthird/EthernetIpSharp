@@ -7,10 +7,10 @@ namespace SRCthird.EthernetIPSharp.Logix;
 public interface ITagDatabase
 {
     /// <summary>Add an atomic tag with the given type and optional array size.</summary>
-    Tag AddTag(string name, ushort tagType, int elementCount = 1, bool isReadOnly = false);
+    Tag AddTag(string name, ushort tagType, int elementCount = 1, bool disableWrite = false);
 
     /// <summary>Add a structured tag backed by a template definition.</summary>
-    Tag AddTag(string name, TemplateDefinition template, int elementCount = 1, bool isReadOnly = false);
+    Tag AddTag(string name, TemplateDefinition template, int elementCount = 1, bool disableWrite = false);
 
     /// <summary>Find a tag by name (case-insensitive).</summary>
     Tag? FindByName(string name);

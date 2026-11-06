@@ -1,9 +1,9 @@
-﻿namespace SRCthird.EthernetIPSharp.Logix;
+namespace SRCthird.EthernetIPSharp.Logix;
 
 internal sealed class LogixValue
 {
     private readonly Tag _root;
-    private readonly bool _memberIsReadOnly;
+    private readonly bool _memberDisableWrite;
     private readonly int _baseOffset;
     private readonly bool _isBool;
     private readonly int _boolBit;
@@ -16,14 +16,14 @@ internal sealed class LogixValue
     public int ElementSize { get; }
     public int ElementCount { get; }
     public int DataSize => ElementSize * ElementCount;
-    public bool IsReadOnly => _root.IsReadOnly || _memberIsReadOnly;
+    public bool DisableWrite => _root.DisableWrite || _memberDisableWrite;
 
     public bool IsArray => ElementCount > 1;
 
     public LogixValue(Tag tag)
     {
         _root = tag;
-        _memberIsReadOnly = false;
+        _memberDisableWrite = false;
         RootElementIndex = 0;
         MemberOffset = 0;
         TagType = tag.TagType;
@@ -39,7 +39,7 @@ internal sealed class LogixValue
             throw new ArgumentOutOfRangeException(nameof(memberElementIndex));
 
         _root = root;
-        _memberIsReadOnly = member.IsReadOnly;
+        _memberDisableWrite = member.DisableWrite;
         FullPath = fullPath ?? root.Name;
         MemberDataType = member.DataType;
         if ((uint)rootElementIndex >= (uint)root.ElementCount)
