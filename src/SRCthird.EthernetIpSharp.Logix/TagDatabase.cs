@@ -73,18 +73,26 @@ public sealed class TagDatabase : ITagDatabase
             elementCount: elementCount,
             disableWrite: disableWrite,
             disableRead: disableRead,
-            hasWriteDisabledMembers: TemplateHasWriteDisabledMembers(template));
+            hasWriteDisabledMembers: TemplateHasWriteDisabledMembers(template),
+            hasReadDisabledMembers: TemplateHasReadDisabledMembers(template));
 
         RegisterTag(tag);
         Interlocked.Increment(ref _structureVersion);
         return tag;
     }
 
-    private bool TemplateHasWriteDisabledMembers(TemplateDefinition template)
+    private static bool TemplateHasWriteDisabledMembers(TemplateDefinition template)
     {
         return template.Members.Any(member =>
             member.DisableWrite ||
             (member.NestedTemplate != null && TemplateHasWriteDisabledMembers(member.NestedTemplate)));
+    }
+
+    private static bool TemplateHasReadDisabledMembers(TemplateDefinition template)
+    {
+        return template.Members.Any(member =>
+            member.DisableRead ||
+            (member.NestedTemplate != null && TemplateHasReadDisabledMembers(member.NestedTemplate)));
     }
 
     private void RegisterTag(Tag tag)
@@ -212,7 +220,8 @@ public sealed class TagDatabase : ITagDatabase
 
                 // Add BOOL at current bit position within the host byte.
                 // ArraySize field stores bit position for BOOLs (matches PLC template Info field).
-                resolvedMembers.Add(new TemplateMemberInfo(m.Name, LogixDataTypes.BOOL, boolHostOffset, boolBitPos, 0, disableWrite: m.DisableWrite));
+                resolvedMembers.Add(new TemplateMemberInfo(m.Name, LogixDataTypes.BOOL, boolHostOffset, boolBitPos, 0,
+                    disableWrite: m.DisableWrite, disableRead: m.DisableRead));
                 boolBitPos++;
             }
             else
@@ -235,7 +244,8 @@ public sealed class TagDatabase : ITagDatabase
 
                 int memberSize = m.ArraySize > 0 ? elemSize * m.ArraySize : elemSize;
 
-                resolvedMembers.Add(new TemplateMemberInfo(m.Name, m.DataType, offset, m.ArraySize, elemSize, m.NestedTemplate, disableWrite: m.DisableWrite));
+                resolvedMembers.Add(new TemplateMemberInfo(m.Name, m.DataType, offset, m.ArraySize, elemSize, m.NestedTemplate,
+                    disableWrite: m.DisableWrite, disableRead: m.DisableRead));
                 offset += memberSize;
             }
         }
@@ -287,19 +297,23 @@ public readonly struct TemplateMember
     public int ArraySize { get; }
 
     public bool DisableWrite { get; }
+    public bool DisableRead { get; }
 
     public TemplateDefinition? NestedTemplate { get; }
 
-    public TemplateMember(string name, ushort dataType, int arraySize = 0, bool disableWrite = false)
+    public TemplateMember(string name, ushort dataType, int arraySize = 0,
+        bool disableWrite = false, bool disableRead = false)
     {
         Name = name;
         DataType = dataType;
         NestedTemplate = null;
         ArraySize = arraySize;
         DisableWrite = disableWrite;
+        DisableRead = disableRead;
     }
 
-    public TemplateMember(string name, TemplateDefinition template, int arraySize = 0, bool disableWrite = false)
+    public TemplateMember(string name, TemplateDefinition template, int arraySize = 0,
+        bool disableWrite = false, bool disableRead = false)
     {
         ArgumentNullException.ThrowIfNull(template);
         Name = name;
@@ -307,6 +321,7 @@ public readonly struct TemplateMember
         NestedTemplate = template;
         ArraySize = arraySize;
         DisableWrite = disableWrite;
+        DisableRead = disableRead;
     }
 }
 
@@ -332,11 +347,16 @@ public readonly struct TemplateMemberInfo
     public int ElementSize { get; }
 
     public bool DisableWrite { get; }
+    public bool DisableRead { get; }
+    public bool HasWriteDisabledMembers { get; }
+    public bool HasReadDisabledMembers { get; }
 
     public TemplateDefinition? NestedTemplate { get; }
 
     public TemplateMemberInfo(string name, ushort dataType, int offset, int arraySize,
-        int elementSize, TemplateDefinition? nestedTemplate = null, bool disableWrite = false)
+        int elementSize, TemplateDefinition? nestedTemplate = null,
+        bool disableWrite = false, bool hasWriteDisabledMembers = false,
+        bool disableRead = false, bool hasReadDisabledMembers = false)
     {
         Name = name;
         DataType = dataType;
@@ -345,6 +365,9 @@ public readonly struct TemplateMemberInfo
         ElementSize = elementSize;
         NestedTemplate = nestedTemplate;
         DisableWrite = disableWrite;
+        DisableRead = disableRead;
+        HasWriteDisabledMembers = hasWriteDisabledMembers;
+        HasReadDisabledMembers = hasReadDisabledMembers;
     }
 }
 

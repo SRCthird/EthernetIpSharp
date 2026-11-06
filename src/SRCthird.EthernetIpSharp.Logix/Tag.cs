@@ -20,6 +20,7 @@ public sealed class Tag
 
     /// <summary>True when this struct contains one or more read-only template members.</summary>
     public bool HasWriteDisabledMembers { get; }
+    public bool HasReadDisabledMembers { get; }
 
     /// <summary>Tag name as it appears in the controller (e.g. "rate", "MyStruct").</summary>
     public string Name { get; }
@@ -55,8 +56,9 @@ public sealed class Tag
     public event Action<Tag, TagChangeInfo>? ValueChanged;
 
     public Tag(uint instanceId, string name, ushort symbolType, ushort tagType,
-               int elementSize, int elementCount = 1, bool disableWrite = false, 
-               bool hasWriteDisabledMembers = false, bool disableRead = false)
+               int elementSize, int elementCount = 1,
+               bool disableWrite = false, bool hasWriteDisabledMembers = false,
+               bool disableRead = false, bool hasReadDisabledMembers = false)
     {
         InstanceId = instanceId;
         Name = name;
@@ -67,6 +69,7 @@ public sealed class Tag
         DisableWrite = disableWrite;
         DisableRead = disableRead;
         HasWriteDisabledMembers = hasWriteDisabledMembers;
+        HasReadDisabledMembers = hasReadDisabledMembers;
         _data = new byte[elementSize * elementCount];
     }
 

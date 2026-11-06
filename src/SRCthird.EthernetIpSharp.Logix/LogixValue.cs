@@ -6,6 +6,7 @@ internal sealed class LogixValue
 {
     private readonly Tag _root;
     private readonly bool _memberDisableWrite;
+    private readonly bool _memberDisableRead;
     private readonly int _baseOffset;
     private readonly bool _isBool;
     private readonly int _boolBit;
@@ -19,7 +20,7 @@ internal sealed class LogixValue
     public int ElementCount { get; }
     public int DataSize => ElementSize * ElementCount;
     public bool DisableWrite => _root.DisableWrite || _memberDisableWrite;
-    public bool DisableRead => _root.DisableRead;
+    public bool DisableRead => _root.DisableRead || _memberDisableRead;
 
     public bool IsArray => ElementCount > 1;
 
@@ -27,6 +28,7 @@ internal sealed class LogixValue
     {
         _root = tag;
         _memberDisableWrite = false;
+        _memberDisableRead = false;
         RootElementIndex = 0;
         MemberOffset = 0;
         TagType = tag.TagType;
@@ -43,6 +45,7 @@ internal sealed class LogixValue
 
         _root = root;
         _memberDisableWrite = member.DisableWrite;
+        _memberDisableRead = member.DisableRead;
         FullPath = fullPath ?? root.Name;
         MemberDataType = member.DataType;
         if ((uint)rootElementIndex >= (uint)root.ElementCount)

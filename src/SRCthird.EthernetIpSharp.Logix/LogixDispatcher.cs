@@ -367,6 +367,7 @@ public class LogixDispatcher : CipDispatcher
         bool leafElementSelected = false;
         int leafElementIndex = 0;
         bool disableWrite = false;
+        bool disableRead = false;
 
         for (int partIndex = 0; partIndex < parts.Length; partIndex++)
         {
@@ -376,6 +377,7 @@ public class LogixDispatcher : CipDispatcher
             if (string.IsNullOrEmpty(member.Name)) return false;
 
             disableWrite |= member.DisableWrite;
+            disableRead |= member.DisableRead;
             int memberCount = member.DataType == LogixDataTypes.BOOL
                 ? 1
                 : Math.Max(1, member.ArraySize);
@@ -429,8 +431,11 @@ public class LogixDispatcher : CipDispatcher
         int arraySize = leaf.DataType == LogixDataTypes.BOOL
             ? leaf.ArraySize
             : (leafElementSelected ? leaf.ArraySize - leafElementIndex : leaf.ArraySize);
+        disableWrite |= leaf.HasWriteDisabledMembers;
+        disableRead |= leaf.HasReadDisabledMembers;
         var resolved = new TemplateMemberInfo(
-            leaf.Name, leaf.DataType, relativeOffset, arraySize, leaf.ElementSize, leaf.NestedTemplate, disableWrite);
+            leaf.Name, leaf.DataType, relativeOffset, arraySize, leaf.ElementSize, leaf.NestedTemplate,
+            disableWrite, disableRead, leaf.HasReadDisabledMembers, leaf.HasWriteDisabledMembers);
         value = new LogixValue(tag, resolved, rootIndex, fullPath: fullMemberPath);
         return true;
     }
