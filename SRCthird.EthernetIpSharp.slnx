@@ -1,12 +1,12 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/SRCthird.EthernetIPSharp.Cip/SRCthird.EthernetIPSharp.Cip.csproj" />
-    <Project Path="src/SRCthird.EthernetIPSharp.Connections/SRCthird.EthernetIPSharp.Connections.csproj" />
-    <Project Path="src/SRCthird.EthernetIPSharp.Device/SRCthird.EthernetIPSharp.Device.csproj" />
-    <Project Path="src/SRCthird.EthernetIPSharp.Host/SRCthird.EthernetIPSharp.Host.csproj" />
-    <Project Path="src/SRCthird.EthernetIPSharp.Logix/SRCthird.EthernetIPSharp.Logix.csproj" />
-    <Project Path="src/SRCthird.EthernetIPSharp.Protocol/SRCthird.EthernetIPSharp.Protocol.csproj" />
-    <Project Path="src/SRCthird.EthernetIPSharp.Safety/SRCthird.EthernetIPSharp.Safety.csproj" />
+    <Project Path="src/SRCthird.EthernetIpSharp.Cip/SRCthird.EthernetIpSharp.Cip.csproj" />
+    <Project Path="src/SRCthird.EthernetIpSharp.Connections/SRCthird.EthernetIpSharp.Connections.csproj" />
+    <Project Path="src/SRCthird.EthernetIpSharp.Device/SRCthird.EthernetIpSharp.Device.csproj" />
+    <Project Path="src/SRCthird.EthernetIpSharp.Host/SRCthird.EthernetIpSharp.Host.csproj" />
+    <Project Path="src/SRCthird.EthernetIpSharp.Logix/SRCthird.EthernetIpSharp.Logix.csproj" />
+    <Project Path="src/SRCthird.EthernetIpSharp.Protocol/SRCthird.EthernetIpSharp.Protocol.csproj" />
+    <Project Path="src/SRCthird.EthernetIpSharp.Safety/SRCthird.EthernetIpSharp.Safety.csproj" />
   </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/SafetyAdapterSample/SafetyAdapterSample.csproj" />
@@ -17,12 +17,12 @@
     <Project Path="samples/LogixHost/LogixHost.csproj" />
   </Folder>
   <Folder Name="/packaging/">
-    <Project Path="packaging/SRCthird.EthernetIPSharp.Nuget/SRCthird.EthernetIPSharp.Nuget.csproj" />
+    <Project Path="packaging/SRCthird.EthernetIpSharp.Nuget/SRCthird.EthernetIpSharp.Nuget.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/SRCthird.EthernetIPSharp.Cip.Tests/SRCthird.EthernetIPSharp.Cip.Tests.csproj" />
-    <Project Path="tests/SRCthird.EthernetIPSharp.Logix.Tests/SRCthird.EthernetIPSharp.Logix.Tests.csproj" />
-    <Project Path="tests/SRCthird.EthernetIPSharp.Protocol.Tests/SRCthird.EthernetIPSharp.Protocol.Tests.csproj" />
-    <Project Path="tests/SRCthird.EthernetIPSharp.Safety.Tests/SRCthird.EthernetIPSharp.Safety.Tests.csproj" />
+    <Project Path="tests/SRCthird.EthernetIpSharp.Cip.Tests/SRCthird.EthernetIpSharp.Cip.Tests.csproj" />
+    <Project Path="tests/SRCthird.EthernetIpSharp.Logix.Tests/SRCthird.EthernetIpSharp.Logix.Tests.csproj" />
+    <Project Path="tests/SRCthird.EthernetIpSharp.Protocol.Tests/SRCthird.EthernetIpSharp.Protocol.Tests.csproj" />
+    <Project Path="tests/SRCthird.EthernetIpSharp.Safety.Tests/SRCthird.EthernetIpSharp.Safety.Tests.csproj" />
   </Folder>
 </Solution>

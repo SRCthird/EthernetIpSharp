@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\SRCthird.EthernetIPSharp.Device\SRCthird.EthernetIPSharp.Device.csproj" />
-    <ProjectReference Include="..\SRCthird.EthernetIPSharp.Safety\SRCthird.EthernetIPSharp.Safety.csproj" />
+    <ProjectReference Include="..\SRCthird.EthernetIpSharp.Device\SRCthird.EthernetIpSharp.Device.csproj" />
+    <ProjectReference Include="..\SRCthird.EthernetIpSharp.Safety\SRCthird.EthernetIpSharp.Safety.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

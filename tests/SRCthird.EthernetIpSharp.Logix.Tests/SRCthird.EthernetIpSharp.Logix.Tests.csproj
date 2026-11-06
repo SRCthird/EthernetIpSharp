@@ -21,10 +21,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Logix\SRCthird.EthernetIPSharp.Logix.csproj" />
-    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Cip\SRCthird.EthernetIPSharp.Cip.csproj" />
-    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Protocol\SRCthird.EthernetIPSharp.Protocol.csproj" />
-    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Device\SRCthird.EthernetIPSharp.Device.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIpSharp.Logix\SRCthird.EthernetIpSharp.Logix.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIpSharp.Cip\SRCthird.EthernetIpSharp.Cip.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIpSharp.Protocol\SRCthird.EthernetIpSharp.Protocol.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIpSharp.Device\SRCthird.EthernetIpSharp.Device.csproj" />
   </ItemGroup>
 
 </Project>

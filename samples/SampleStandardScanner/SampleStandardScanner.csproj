@@ -5,6 +5,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Protocol\SRCthird.EthernetIPSharp.Protocol.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIpSharp.Protocol\SRCthird.EthernetIpSharp.Protocol.csproj" />
   </ItemGroup>
 </Project>

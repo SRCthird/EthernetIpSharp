@@ -5,8 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Logix\SRCthird.EthernetIPSharp.Logix.csproj" />
-    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Protocol\SRCthird.EthernetIPSharp.Protocol.csproj" />
-    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Cip\SRCthird.EthernetIPSharp.Cip.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIpSharp.Logix\SRCthird.EthernetIpSharp.Logix.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIpSharp.Protocol\SRCthird.EthernetIpSharp.Protocol.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIpSharp.Cip\SRCthird.EthernetIpSharp.Cip.csproj" />
   </ItemGroup>
 </Project>

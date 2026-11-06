@@ -11,8 +11,8 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Safety\SRCthird.EthernetIPSharp.Safety.csproj" />
-    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Cip\SRCthird.EthernetIPSharp.Cip.csproj" />
-    <ProjectReference Include="..\..\src\SRCthird.EthernetIPSharp.Connections\SRCthird.EthernetIPSharp.Connections.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIpSharp.Safety\SRCthird.EthernetIpSharp.Safety.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIpSharp.Cip\SRCthird.EthernetIpSharp.Cip.csproj" />
+    <ProjectReference Include="..\..\src\SRCthird.EthernetIpSharp.Connections\SRCthird.EthernetIpSharp.Connections.csproj" />
   </ItemGroup>
 </Project>
