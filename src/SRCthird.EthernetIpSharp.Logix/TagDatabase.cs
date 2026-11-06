@@ -81,14 +81,14 @@ public sealed class TagDatabase : ITagDatabase
         return tag;
     }
 
-    private static bool TemplateHasWriteDisabledMembers(TemplateDefinition template)
+    public static bool TemplateHasWriteDisabledMembers(TemplateDefinition template)
     {
         return template.Members.Any(member =>
             member.DisableWrite ||
             (member.NestedTemplate != null && TemplateHasWriteDisabledMembers(member.NestedTemplate)));
     }
 
-    private static bool TemplateHasReadDisabledMembers(TemplateDefinition template)
+    public static bool TemplateHasReadDisabledMembers(TemplateDefinition template)
     {
         return template.Members.Any(member =>
             member.DisableRead ||
