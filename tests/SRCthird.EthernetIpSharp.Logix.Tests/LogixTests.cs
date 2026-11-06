@@ -159,6 +159,203 @@ public class LogixTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task DisableWriteTag_ReadsAreAllowed()
+    {
+        var tag = _logix.Tags.AddTag("readOnlyRate", LogixDataTypes.DINT, disableWrite: true);
+        tag.Write(0, 123);
+
+        using var client = new TcpClient();
+        await client.ConnectAsync(IPAddress.Loopback, _tcpPort);
+        var stream = client.GetStream();
+        uint session = await RegisterSessionAsync(stream);
+
+        var path = BuildSymbolicPath("readOnlyRate");
+        var (status, data) = await SendCipServiceAsync(
+            stream, session, 0x4C, path, [0x01, 0x00]);
+
+        Assert.Equal(0, status);
+        Assert.Equal(123, BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(2)));
+    }
+
+    [Theory]
+    [InlineData((byte)0x4D)] // Write Tag
+    [InlineData((byte)0x53)] // Write Tag Fragmented
+    [InlineData((byte)0x4E)] // Read Modify Write
+    public async Task DisableWriteTag_WriteServicesReturnPermissionDenied(byte serviceCode)
+    {
+        var tag = _logix.Tags.AddTag("readOnlyRate", LogixDataTypes.DINT, disableWrite: true);
+        tag.Write(0, 123);
+
+        byte[] writeData = serviceCode switch
+        {
+            0x4D => [0xC4, 0x00, 0x01, 0x00, 0xE7, 0x03, 0x00, 0x00],
+            0x53 => [0xC4, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0xE7, 0x03, 0x00, 0x00],
+            0x4E => [0x04, 0x00, 0x01, 0x00, 0x00, 0x00,0xFF, 0xFF, 0xFF, 0xFF],
+            _ => throw new ArgumentOutOfRangeException(nameof(serviceCode)),
+        };
+
+        using var client = new TcpClient();
+        await client.ConnectAsync(IPAddress.Loopback, _tcpPort);
+        var stream = client.GetStream();
+        uint session = await RegisterSessionAsync(stream);
+
+        var (status, _) = await SendCipServiceAsync(
+            stream, session, serviceCode, BuildSymbolicPath("readOnlyRate"), writeData);
+
+        Assert.Equal(CipStatus.PermissionDenied, status);
+        Assert.Equal(123, tag.Read<int>());
+    }
+
+    [Fact]
+    public async Task DisableWriteTemplateMember_RejectsProtectedAndWholeStructWrites()
+    {
+        var template = _logix.Tags.AddTemplate(
+            "MemberAccessTest",
+            new TemplateMember("Writable", LogixDataTypes.DINT),
+            new TemplateMember("Protected", LogixDataTypes.DINT, disableWrite: true));
+        var tag = _logix.Tags.AddTag("memberHost", template);
+        var initial = new byte[8];
+        BinaryPrimitives.WriteInt32LittleEndian(initial.AsSpan(4), 42);
+        tag.SetData(initial);
+
+        using var client = new TcpClient();
+        await client.ConnectAsync(IPAddress.Loopback, _tcpPort);
+        var stream = client.GetStream();
+        uint session = await RegisterSessionAsync(stream);
+
+        var protectedWrite = new byte[] { 0xC4, 0x00, 0x01, 0x00, 0xE7, 0x03, 0x00, 0x00 };
+        var (protectedStatus, _) = await SendCipServiceAsync(
+            stream, session, 0x4D, BuildSymbolicPath("memberHost.Protected"), protectedWrite);
+        Assert.Equal(CipStatus.PermissionDenied, protectedStatus);
+        Assert.Equal(42, BinaryPrimitives.ReadInt32LittleEndian(tag.GetData(4, 4)));
+
+        var wholeStructWrite = new byte[14];
+        BinaryPrimitives.WriteUInt16LittleEndian(wholeStructWrite, 0x02A0);
+        BinaryPrimitives.WriteUInt16LittleEndian(wholeStructWrite.AsSpan(2), template.StructureHandle);
+        BinaryPrimitives.WriteUInt16LittleEndian(wholeStructWrite.AsSpan(4), 1);
+        var (wholeStructStatus, _) = await SendCipServiceAsync(
+            stream, session, 0x4D, BuildSymbolicPath("memberHost"), wholeStructWrite);
+        Assert.Equal(CipStatus.PermissionDenied, wholeStructStatus);
+        Assert.Equal(42, BinaryPrimitives.ReadInt32LittleEndian(tag.GetData(4, 4)));
+
+        var writableWrite = new byte[] { 0xC4, 0x00, 0x01, 0x00, 0x09, 0x03, 0x00, 0x00 };
+        var (writableStatus, _) = await SendCipServiceAsync(
+            stream, session, 0x4D, BuildSymbolicPath("memberHost.Writable"), writableWrite);
+        Assert.Equal(0, writableStatus);
+        Assert.Equal(777, BinaryPrimitives.ReadInt32LittleEndian(tag.GetData(0, 4)));
+    }
+
+    [Fact]
+    public async Task DisableReadTag_ReadIsDeniedButWriteStillWorks()
+    {
+        var tag = _logix.Tags.AddTag("writeOnlyRate", LogixDataTypes.DINT, disableRead: true);
+        tag.Write(0, 123);
+
+        using var client = new TcpClient();
+        await client.ConnectAsync(IPAddress.Loopback, _tcpPort);
+        var stream = client.GetStream();
+        uint session = await RegisterSessionAsync(stream);
+        var path = BuildSymbolicPath("writeOnlyRate");
+
+        var (readStatus, _) = await SendCipServiceAsync(
+            stream, session, 0x4C, path, [0x01, 0x00]);
+        Assert.Equal(CipStatus.PermissionDenied, readStatus);
+
+        var writeData = new byte[] { 0xC4, 0x00, 0x01, 0x00, 0xE7, 0x03, 0x00, 0x00 };
+        var (writeStatus, _) = await SendCipServiceAsync(stream, session, 0x4D, path, writeData);
+        Assert.Equal(0, writeStatus);
+        Assert.Equal(999, tag.Read<int>());
+
+        var rmwData = new byte[] { 0x04, 0x00, 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF };
+        var (rmwStatus, _) = await SendCipServiceAsync(stream, session, 0x4E, path, rmwData);
+        Assert.Equal(CipStatus.PermissionDenied, rmwStatus);
+        Assert.Equal(999, tag.Read<int>());
+    }
+
+    [Fact]
+    public async Task DisableReadTemplateMember_ProtectsMemberAndWholeStructButAllowsSiblings()
+    {
+        var template = _logix.Tags.AddTemplate(
+            "MemberReadAccessTest",
+            new TemplateMember("Writable", LogixDataTypes.DINT),
+            new TemplateMember("Protected", LogixDataTypes.DINT, disableRead: true));
+        var tag = _logix.Tags.AddTag("memberReadHost", template);
+        var initial = new byte[8];
+        BinaryPrimitives.WriteInt32LittleEndian(initial.AsSpan(0), 17);
+        BinaryPrimitives.WriteInt32LittleEndian(initial.AsSpan(4), 42);
+        tag.SetData(initial);
+
+        using var client = new TcpClient();
+        await client.ConnectAsync(IPAddress.Loopback, _tcpPort);
+        var stream = client.GetStream();
+        uint session = await RegisterSessionAsync(stream);
+
+        var protectedPath = BuildSymbolicPath("memberReadHost.Protected");
+        var (protectedStatus, _) = await SendCipServiceAsync(
+            stream, session, 0x4C, protectedPath, [0x01, 0x00]);
+        Assert.Equal(CipStatus.PermissionDenied, protectedStatus);
+
+        var (wholeStructStatus, _) = await SendCipServiceAsync(
+            stream, session, 0x4C, BuildSymbolicPath("memberReadHost"), [0x01, 0x00]);
+        Assert.Equal(CipStatus.PermissionDenied, wholeStructStatus);
+
+        var (siblingStatus, siblingData) = await SendCipServiceAsync(
+            stream, session, 0x4C, BuildSymbolicPath("memberReadHost.Writable"), [0x01, 0x00]);
+        Assert.Equal(0, siblingStatus);
+        Assert.Equal(17, BinaryPrimitives.ReadInt32LittleEndian(siblingData.AsSpan(2)));
+
+        var protectedWrite = new byte[] { 0xC4, 0x00, 0x01, 0x00, 0xE7, 0x03, 0x00, 0x00 };
+        var (protectedWriteStatus, _) = await SendCipServiceAsync(
+            stream, session, 0x4D, protectedPath, protectedWrite);
+        Assert.Equal(0, protectedWriteStatus);
+        Assert.Equal(999, BinaryPrimitives.ReadInt32LittleEndian(tag.GetData(4, 4)));
+
+        var siblingWrite = new byte[] { 0xC4, 0x00, 0x01, 0x00, 0x21, 0x03, 0x00, 0x00 };
+        var (siblingWriteStatus, _) = await SendCipServiceAsync(
+            stream, session, 0x4D, BuildSymbolicPath("memberReadHost.Writable"), siblingWrite);
+        Assert.Equal(0, siblingWriteStatus);
+        Assert.Equal(801, BinaryPrimitives.ReadInt32LittleEndian(tag.GetData(0, 4)));
+    }
+
+    [Fact]
+    public async Task DisableReadTemplateMember_InheritsThroughNestedMembers()
+    {
+        var inner = _logix.Tags.AddTemplate(
+            "InnerMemberReadTest",
+            new TemplateMember("Visible", LogixDataTypes.DINT),
+            new TemplateMember("Protected", LogixDataTypes.DINT, disableRead: true));
+        var outer = _logix.Tags.AddTemplate(
+            "OuterMemberReadTest",
+            new TemplateMember("Nested", inner),
+            new TemplateMember("Restricted", inner, disableRead: true),
+            new TemplateMember("Sibling", LogixDataTypes.DINT));
+        var tag = _logix.Tags.AddTag("nestedReadHost", outer);
+        tag.SetData(new byte[(int)outer.StructureSize]);
+
+        using var client = new TcpClient();
+        await client.ConnectAsync(IPAddress.Loopback, _tcpPort);
+        var stream = client.GetStream();
+        uint session = await RegisterSessionAsync(stream);
+
+        var (wholeNestedStatus, _) = await SendCipServiceAsync(
+            stream, session, 0x4C, BuildSymbolicPath("nestedReadHost.Nested"), [0x01, 0x00]);
+        Assert.Equal(CipStatus.PermissionDenied, wholeNestedStatus);
+
+        var (nestedSecretStatus, _) = await SendCipServiceAsync(
+            stream, session, 0x4C, BuildSymbolicPath("nestedReadHost.Nested.Protected"), [0x01, 0x00]);
+        Assert.Equal(CipStatus.PermissionDenied, nestedSecretStatus);
+
+        var (inheritedStatus, _) = await SendCipServiceAsync(
+            stream, session, 0x4C, BuildSymbolicPath("nestedReadHost.Restricted.Visible"), [0x01, 0x00]);
+        Assert.Equal(CipStatus.PermissionDenied, inheritedStatus);
+
+        var (visibleStatus, visibleData) = await SendCipServiceAsync(
+            stream, session, 0x4C, BuildSymbolicPath("nestedReadHost.Nested.Visible"), [0x01, 0x00]);
+        Assert.Equal(0, visibleStatus);
+        Assert.Equal(0, BinaryPrimitives.ReadInt32LittleEndian(visibleData.AsSpan(2)));
+    }
+
+    [Fact]
     public async Task ReadTag_NonexistentTag_ReturnsError()
     {
         using var client = new TcpClient();
