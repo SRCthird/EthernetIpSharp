@@ -1741,7 +1741,7 @@ public sealed class StructureValue
         {
             int count = Math.Min(m.ArraySize, 4); // Show first 4
             var vals = new List<string>();
-            int elemSize = LogixDataTypes.GetElementSize((ushort)(m.DataType & 0x00FF));
+            int elemSize = CipDataTypeCast.GetFixedSize((ushort)(m.DataType & 0x00FF));
             if (elemSize <= 0) return $"[{m.ArraySize}]";
             for (int i = 0; i < count && off + elemSize <= RawData.Length; i++)
             {

@@ -305,6 +305,6 @@ public sealed class SymbolObject
         name: $"Program:{program.Name}",
         symbolType: LogixDataTypes.DINT,
         tagType: LogixDataTypes.DINT,
-        elementSize: LogixDataTypes.GetElementSize(LogixDataTypes.DINT));
+        elementSize: CipDataTypeCast.GetFixedSize(LogixDataTypes.DINT));
 
 }

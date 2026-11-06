@@ -1,3 +1,4 @@
+using SRCthird.EthernetIPSharp.Cip;
 using System.Collections.Concurrent;
 
 namespace SRCthird.EthernetIPSharp.Logix;
@@ -34,7 +35,7 @@ public sealed class TagDatabase : ITagDatabase
     /// <summary>Add an atomic tag.</summary>
     public Tag AddTag(string name, ushort tagType, int elementCount = 1, bool disableWrite = false, bool disableRead = false)
     {
-        int elementSize = LogixDataTypes.GetElementSize(tagType);
+        int elementSize = CipDataTypeCast.GetFixedSize(tagType);
         if (elementSize < 0)
             throw new ArgumentException($"Unknown tag type 0x{tagType:X4}", nameof(tagType));
 
@@ -222,12 +223,12 @@ public sealed class TagDatabase : ITagDatabase
 
                 int elemSize = m.NestedTemplate != null
                     ? checked((int)m.NestedTemplate.StructureSize)
-                    : LogixDataTypes.GetElementSize(m.DataType);
+                    : CipDataTypeCast.GetFixedSize(m.DataType);
 
                 if (elemSize <= 0) elemSize = 4; // Default for unknown/struct types
 
                 // Alignment based on data type
-                int alignment = LogixDataTypes.GetElementSize(m.DataType);
+                int alignment = CipDataTypeCast.GetFixedSize(m.DataType);
                 if (alignment <= 0)
                     alignment = Math.Min(elemSize, 4);
                 offset = Align(offset, alignment);

@@ -70,30 +70,6 @@ public static class LogixDataTypes
     /// <summary>Maximum character count for the predefined Logix STRING type.</summary>
     public const int StringMaxLength = 82;
 
-    /// <summary>Returns the byte size of an atomic tag type, or -1 if unknown/structure.</summary>
-    public static int GetElementSize(ushort tagType)
-    {
-        // Mask off BOOL bit position field (upper nibble of low byte)
-        ushort baseType = (ushort)(tagType & 0x00FF);
-        return baseType switch
-        {
-            0xC1 => 1,  // BOOL
-            0xC2 => 1,  // SINT
-            0xC3 => 2,  // INT
-            0xC4 => 4,  // DINT
-            0xC5 => 8,  // LINT
-            0xC6 => 1,  // USINT
-            0xC7 => 2,  // UINT
-            0xC8 => 4,  // UDINT
-            0xC9 => 8,  // ULINT
-            0xCA => 4,  // REAL
-            0xCB => 8,  // LREAL
-            0xD3 => 4,  // DWORD
-            0xDA => ShortStringStorageSize, // SHORT_STRING
-            _ => -1,
-        };
-    }
-
     /// <summary>
     /// Build the SymbolType attribute value for an atomic tag.
     /// Bits 14-13 encode array dimensions. Bit 15=0 for atomic.

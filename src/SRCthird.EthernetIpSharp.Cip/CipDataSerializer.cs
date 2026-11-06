@@ -138,25 +138,4 @@ public static class CipDataSerializer
         Encoding.ASCII.GetBytes(value.AsSpan(0, len), dst.Slice(2));
         return 2 + len;
     }
-
-    /// <summary>Returns the fixed size in bytes for a CIP data type, or -1 for variable-length types (strings).</summary>
-    public static int GetFixedSize(CipDataType type) => type switch
-    {
-        CipDataType.Bool => 1,
-        CipDataType.Sint => 1,
-        CipDataType.Int => 2,
-        CipDataType.Dint => 4,
-        CipDataType.Lint => 8,
-        CipDataType.Usint => 1,
-        CipDataType.Uint => 2,
-        CipDataType.Udint => 4,
-        CipDataType.Ulint => 8,
-        CipDataType.Real => 4,
-        CipDataType.Lreal => 8,
-        CipDataType.Byte => 1,
-        CipDataType.Word => 2,
-        CipDataType.Dword => 4,
-        CipDataType.Lword => 8,
-        _ => -1,
-    };
 }

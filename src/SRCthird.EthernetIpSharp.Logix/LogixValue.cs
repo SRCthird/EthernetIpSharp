@@ -1,3 +1,5 @@
+using SRCthird.EthernetIPSharp.Cip;
+
 namespace SRCthird.EthernetIPSharp.Logix;
 
 internal sealed class LogixValue
@@ -46,12 +48,12 @@ internal sealed class LogixValue
         if ((uint)rootElementIndex >= (uint)root.ElementCount)
             throw new ArgumentOutOfRangeException(nameof(rootElementIndex));
         RootElementIndex = rootElementIndex;
-        MemberOffset = checked(member.Offset + memberElementIndex * LogixDataTypes.GetElementSize(member.DataType));
+        MemberOffset = checked(member.Offset + memberElementIndex * CipDataTypeCast.GetFixedSize(member.DataType));
         _baseOffset = checked(rootElementIndex * root.ElementSize + MemberOffset);
         _isBool = member.DataType == LogixDataTypes.BOOL;
         _boolBit = member.ArraySize;
         TagType = member.DataType;
-        ElementSize = LogixDataTypes.GetElementSize(member.DataType);
+        ElementSize = CipDataTypeCast.GetFixedSize(member.DataType);
         if (ElementSize <= 0)
             throw new ArgumentException("UDT member is not an atomic Logix value.", nameof(member));
         ElementCount = _isBool ? 1 : Math.Max(1, member.ArraySize);

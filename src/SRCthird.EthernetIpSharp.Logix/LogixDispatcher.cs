@@ -287,7 +287,7 @@ public class LogixDispatcher : CipDispatcher
 
         var member = template.Members.FirstOrDefault(
             m => string.Equals(m.Name, memberPath, StringComparison.OrdinalIgnoreCase));
-        if (member.Name == null || LogixDataTypes.GetElementSize(member.DataType) <= 0)
+        if (member.Name == null || CipDataTypeCast.GetFixedSize(member.DataType) <= 0)
             return false;
 
         var elementIds = path.ElementIds ?? Array.Empty<uint>();
@@ -421,7 +421,7 @@ public class LogixDispatcher : CipDispatcher
 
         if (elementCursor != elementIds.Count || leaf.NestedTemplate != null)
             return false;
-        if (LogixDataTypes.GetElementSize(leaf.DataType) <= 0)
+        if (CipDataTypeCast.GetFixedSize(leaf.DataType) <= 0)
             return false;
         if (rootIndex < 0 || rootIndex >= tag.ElementCount)
             return false;

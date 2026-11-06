@@ -1,3 +1,4 @@
+using SRCthird.EthernetIPSharp.Cip;
 using System.Text;
 
 namespace SRCthird.EthernetIPSharp.Logix;
@@ -173,7 +174,7 @@ public static class UdtCodeGenerator
 
         if (m.IsArray && (m.DataType & 0xE000) == 0x2000) // Array of atomics
         {
-            int elemSize = LogixDataTypes.GetElementSize((ushort)(m.DataType & 0x00FF));
+            int elemSize = CipDataTypeCast.GetFixedSize((ushort)(m.DataType & 0x00FF));
             if (elemSize <= 0) return;
             string writeCall = GetWriteCall(m.DataType, elemSize);
             if (writeCall != null)
@@ -212,7 +213,7 @@ public static class UdtCodeGenerator
 
         if (m.IsArray && (m.DataType & 0xE000) == 0x2000)
         {
-            int elemSize = LogixDataTypes.GetElementSize((ushort)(m.DataType & 0x00FF));
+            int elemSize = CipDataTypeCast.GetFixedSize((ushort)(m.DataType & 0x00FF));
             if (elemSize <= 0) return;
             string ctype = GetCSharpAtomicType((ushort)(m.DataType & 0x00FF));
             string readCall = GetReadCall(m.DataType, elemSize);
