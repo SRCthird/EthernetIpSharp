@@ -69,11 +69,19 @@ public sealed class TagDatabase : ITagDatabase
             tagType: template.StructureHandle,
             elementSize: (int)template.StructureSize,
             elementCount: elementCount,
-            isReadOnly: isReadOnly);
+            isReadOnly: isReadOnly,
+            hasReadOnlyMembers: TemplateHasReadOnlyMembers(template));
 
         RegisterTag(tag);
         Interlocked.Increment(ref _structureVersion);
         return tag;
+    }
+
+    private bool TemplateHasReadOnlyMembers(TemplateDefinition template)
+    {
+        return template.Members.Any(member =>
+            member.IsReadOnly ||
+            (member.NestedTemplate != null && TemplateHasReadOnlyMembers(member.NestedTemplate)));
     }
 
     private void RegisterTag(Tag tag)
@@ -201,7 +209,7 @@ public sealed class TagDatabase : ITagDatabase
 
                 // Add BOOL at current bit position within the host byte.
                 // ArraySize field stores bit position for BOOLs (matches PLC template Info field).
-                resolvedMembers.Add(new TemplateMemberInfo(m.Name, LogixDataTypes.BOOL, boolHostOffset, boolBitPos, 0));
+                resolvedMembers.Add(new TemplateMemberInfo(m.Name, LogixDataTypes.BOOL, boolHostOffset, boolBitPos, 0, isReadOnly: m.IsReadOnly));
                 boolBitPos++;
             }
             else
@@ -224,7 +232,7 @@ public sealed class TagDatabase : ITagDatabase
 
                 int memberSize = m.ArraySize > 0 ? elemSize * m.ArraySize : elemSize;
 
-                resolvedMembers.Add(new TemplateMemberInfo(m.Name, m.DataType, offset, m.ArraySize, elemSize, m.NestedTemplate));
+                resolvedMembers.Add(new TemplateMemberInfo(m.Name, m.DataType, offset, m.ArraySize, elemSize, m.NestedTemplate, isReadOnly: m.IsReadOnly));
                 offset += memberSize;
             }
         }
@@ -275,23 +283,27 @@ public readonly struct TemplateMember
     /// <summary>Array size (0 for scalar members).</summary>
     public int ArraySize { get; }
 
+    public bool IsReadOnly { get; }
+
     public TemplateDefinition? NestedTemplate { get; }
 
-    public TemplateMember(string name, ushort dataType, int arraySize = 0)
+    public TemplateMember(string name, ushort dataType, int arraySize = 0, bool isReadOnly = false)
     {
         Name = name;
         DataType = dataType;
         NestedTemplate = null;
         ArraySize = arraySize;
+        IsReadOnly = isReadOnly;
     }
 
-    public TemplateMember(string name, TemplateDefinition template, int arraySize = 0)
+    public TemplateMember(string name, TemplateDefinition template, int arraySize = 0, bool isReadOnly = false)
     {
         ArgumentNullException.ThrowIfNull(template);
         Name = name;
         DataType = template.StructureHandle;
         NestedTemplate = template;
         ArraySize = arraySize;
+        IsReadOnly = isReadOnly;
     }
 }
 
@@ -316,10 +328,12 @@ public readonly struct TemplateMemberInfo
     /// <summary>Size of one element in bytes.</summary>
     public int ElementSize { get; }
 
+    public bool IsReadOnly { get; }
+
     public TemplateDefinition? NestedTemplate { get; }
 
     public TemplateMemberInfo(string name, ushort dataType, int offset, int arraySize,
-        int elementSize, TemplateDefinition? nestedTemplate = null)
+        int elementSize, TemplateDefinition? nestedTemplate = null, bool isReadOnly = false)
     {
         Name = name;
         DataType = dataType;
@@ -327,6 +341,7 @@ public readonly struct TemplateMemberInfo
         ArraySize = arraySize;
         ElementSize = elementSize;
         NestedTemplate = nestedTemplate;
+        IsReadOnly = isReadOnly;
     }
 }
 

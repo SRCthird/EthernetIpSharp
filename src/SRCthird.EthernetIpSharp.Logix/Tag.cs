@@ -17,6 +17,9 @@ public sealed class Tag
     /// <summary>True when Logix clients may read but not write this tag.</summary>
     public bool IsReadOnly { get; }
 
+    /// <summary>True when this struct contains one or more read-only template members.</summary>
+    public bool HasReadOnlyMembers { get; }
+
     /// <summary>Tag name as it appears in the controller (e.g. "rate", "MyStruct").</summary>
     public string Name { get; }
 
@@ -51,7 +54,7 @@ public sealed class Tag
     public event Action<Tag, TagChangeInfo>? ValueChanged;
 
     public Tag(uint instanceId, string name, ushort symbolType, ushort tagType,
-               int elementSize, int elementCount = 1, bool isReadOnly = false)
+               int elementSize, int elementCount = 1, bool isReadOnly = false, bool hasReadOnlyMembers = false)
     {
         InstanceId = instanceId;
         Name = name;
@@ -60,6 +63,7 @@ public sealed class Tag
         ElementSize = elementSize;
         ElementCount = elementCount;
         IsReadOnly = isReadOnly;
+        HasReadOnlyMembers = hasReadOnlyMembers;
         _data = new byte[elementSize * elementCount];
     }
 

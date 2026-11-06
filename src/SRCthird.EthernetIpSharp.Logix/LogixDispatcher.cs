@@ -366,6 +366,7 @@ public class LogixDispatcher : CipDispatcher
         TemplateMemberInfo leaf = default;
         bool leafElementSelected = false;
         int leafElementIndex = 0;
+        bool isReadOnly = false;
 
         for (int partIndex = 0; partIndex < parts.Length; partIndex++)
         {
@@ -374,6 +375,7 @@ public class LogixDispatcher : CipDispatcher
                 m => string.Equals(m.Name, parts[partIndex], StringComparison.OrdinalIgnoreCase));
             if (string.IsNullOrEmpty(member.Name)) return false;
 
+            isReadOnly |= member.IsReadOnly;
             int memberCount = member.DataType == LogixDataTypes.BOOL
                 ? 1
                 : Math.Max(1, member.ArraySize);
@@ -428,7 +430,7 @@ public class LogixDispatcher : CipDispatcher
             ? leaf.ArraySize
             : (leafElementSelected ? leaf.ArraySize - leafElementIndex : leaf.ArraySize);
         var resolved = new TemplateMemberInfo(
-            leaf.Name, leaf.DataType, relativeOffset, arraySize, leaf.ElementSize);
+            leaf.Name, leaf.DataType, relativeOffset, arraySize, leaf.ElementSize, leaf.NestedTemplate, isReadOnly);
         value = new LogixValue(tag, resolved, rootIndex, fullPath: fullMemberPath);
         return true;
     }
