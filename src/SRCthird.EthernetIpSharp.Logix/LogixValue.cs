@@ -17,6 +17,7 @@ internal sealed class LogixValue
     public int ElementCount { get; }
     public int DataSize => ElementSize * ElementCount;
     public bool DisableWrite => _root.DisableWrite || _memberDisableWrite;
+    public bool DisableRead => _root.DisableRead;
 
     public bool IsArray => ElementCount > 1;
 

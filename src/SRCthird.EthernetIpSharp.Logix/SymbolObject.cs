@@ -20,8 +20,9 @@ public sealed class SymbolObject
 
     /// <summary>Service code for Get_Instance_Attribute_List.</summary>
     public const byte GetInstanceAttributeList = 0x55;
-
+    private const byte ExternalAccessNone = 0x00;
     private const byte ExternalAccessReadOnly = 0x01;
+    private const byte ExternalAccessWriteOnly = 0x02;
     private const byte ExternalAccessReadWrite = 0x03;
 
     private readonly ITagDatabase _tags;
@@ -269,9 +270,13 @@ public sealed class SymbolObject
                         offset += 2;
                         break;
                     case 10:   // External Access (USINT).
-                        buffer[offset++] = tag.DisableWrite 
-                            ? ExternalAccessReadOnly 
-                            : ExternalAccessReadWrite;
+                        buffer[offset++] = tag.DisableRead
+                            ? (tag.DisableWrite
+                                ? ExternalAccessNone
+                                : ExternalAccessWriteOnly)
+                            : (tag.DisableWrite
+                                ? ExternalAccessReadOnly
+                                : ExternalAccessReadWrite);
                         break;
                 }
             }
