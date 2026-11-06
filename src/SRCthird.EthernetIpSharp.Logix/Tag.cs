@@ -14,6 +14,9 @@ public sealed class Tag
     /// <summary>Symbol Object instance ID.</summary>
     public uint InstanceId { get; }
 
+    /// <summary>True when Logix clients may read but not write this tag.</summary>
+    public bool IsReadOnly { get; }
+
     /// <summary>Tag name as it appears in the controller (e.g. "rate", "MyStruct").</summary>
     public string Name { get; }
 
@@ -48,7 +51,7 @@ public sealed class Tag
     public event Action<Tag, TagChangeInfo>? ValueChanged;
 
     public Tag(uint instanceId, string name, ushort symbolType, ushort tagType,
-               int elementSize, int elementCount = 1)
+               int elementSize, int elementCount = 1, bool isReadOnly = false)
     {
         InstanceId = instanceId;
         Name = name;
@@ -56,6 +59,7 @@ public sealed class Tag
         TagType = tagType;
         ElementSize = elementSize;
         ElementCount = elementCount;
+        IsReadOnly = isReadOnly;
         _data = new byte[elementSize * elementCount];
     }
 

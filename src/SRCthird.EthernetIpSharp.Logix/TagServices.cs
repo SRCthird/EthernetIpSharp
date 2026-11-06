@@ -84,6 +84,9 @@ public static class TagServices
     public static CipServiceResponse HandleWriteTag(Tag tag, byte serviceCode, ReadOnlyMemory<byte> data,
         int elementOffset = 0)
     {
+        if (tag.IsReadOnly)
+            return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
+
         var span = data.Span;
         bool isStruct = LogixDataTypes.IsStruct(tag.SymbolType);
 
@@ -226,6 +229,9 @@ public static class TagServices
         ReadOnlyMemory<byte> data,
         int elementOffset = 0)
     {
+        if (tag.IsReadOnly)
+            return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
+
         int typeSize = TypeParameterSize(tag);
         int headerSize = typeSize + 2 + 4;
 
@@ -268,6 +274,9 @@ public static class TagServices
     /// </summary>
     public static CipServiceResponse HandleReadModifyWrite(Tag tag, byte serviceCode, ReadOnlyMemory<byte> data)
     {
+        if (tag.IsReadOnly)
+            return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
+
         if (data.Length < 2)
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 

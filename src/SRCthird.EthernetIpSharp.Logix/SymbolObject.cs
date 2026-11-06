@@ -21,6 +21,9 @@ public sealed class SymbolObject
     /// <summary>Service code for Get_Instance_Attribute_List.</summary>
     public const byte GetInstanceAttributeList = 0x55;
 
+    private const byte ExternalAccessReadOnly = 0x01;
+    private const byte ExternalAccessReadWrite = 0x03;
+
     private readonly ITagDatabase _tags;
     private readonly Func<string?, ITagDatabase?> _scopeResolver;
     private readonly Func<IEnumerable<ProgramDefinition>> _programs;
@@ -265,8 +268,10 @@ public sealed class SymbolObject
                             buffer.AsSpan(offset), (ushort)tag.ElementSize);
                         offset += 2;
                         break;
-                    case 10:   // External Access (USINT). 3 = Read/Write.
-                        buffer[offset++] = 0x03;
+                    case 10:   // External Access (USINT).
+                        buffer[offset++] = tag.IsReadOnly 
+                            ? ExternalAccessReadOnly 
+                            : ExternalAccessReadWrite;
                         break;
                 }
             }

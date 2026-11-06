@@ -15,6 +15,7 @@ internal sealed class LogixValue
     public int ElementSize { get; }
     public int ElementCount { get; }
     public int DataSize => ElementSize * ElementCount;
+    public bool IsReadOnly => _root.IsReadOnly;
 
     public bool IsArray => ElementCount > 1;
 

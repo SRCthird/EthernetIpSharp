@@ -33,6 +33,9 @@ internal static class MemberTagServices
     public static CipServiceResponse Write(
         LogixValue value, byte serviceCode, ReadOnlyMemory<byte> data, int elementOffset)
     {
+        if (value.IsReadOnly)
+            return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
+
         if (data.Length < 4)
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
@@ -81,6 +84,9 @@ internal static class MemberTagServices
     public static CipServiceResponse WriteFragmented(
         LogixValue value, byte serviceCode, ReadOnlyMemory<byte> data, int elementOffset)
     {
+        if (value.IsReadOnly)
+            return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
+
         if (data.Length < 8 || elementOffset < 0)
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 
@@ -137,6 +143,9 @@ internal static class MemberTagServices
     public static CipServiceResponse ReadModifyWrite(
     LogixValue value, byte serviceCode, ReadOnlyMemory<byte> data)
     {
+        if (value.IsReadOnly)
+            return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.PermissionDenied));
+
         if (data.Length < 2)
             return CipServiceResponse.Error(serviceCode, CipStatus.Error(CipStatus.InsufficientCommandData));
 

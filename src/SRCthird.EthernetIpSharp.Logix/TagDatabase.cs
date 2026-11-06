@@ -32,7 +32,7 @@ public sealed class TagDatabase : ITagDatabase
     public event Action<TemplateDefinition>? TemplateAdded;
 
     /// <summary>Add an atomic tag.</summary>
-    public Tag AddTag(string name, ushort tagType, int elementCount = 1)
+    public Tag AddTag(string name, ushort tagType, int elementCount = 1, bool isReadOnly = false)
     {
         int elementSize = LogixDataTypes.GetElementSize(tagType);
         if (elementSize < 0)
@@ -47,7 +47,9 @@ public sealed class TagDatabase : ITagDatabase
             symbolType: symbolType,
             tagType: tagType,
             elementSize: elementSize,
-            elementCount: elementCount);
+            elementCount: elementCount,
+            isReadOnly: isReadOnly);
+
 
         RegisterTag(tag);
         Interlocked.Increment(ref _structureVersion);
@@ -55,7 +57,7 @@ public sealed class TagDatabase : ITagDatabase
     }
 
     /// <summary>Add a structured tag backed by a template.</summary>
-    public Tag AddTag(string name, TemplateDefinition template, int elementCount = 1)
+    public Tag AddTag(string name, TemplateDefinition template, int elementCount = 1, bool isReadOnly = false)
     {
         int arrayDims = elementCount > 1 ? 1 : 0;
         ushort symbolType = LogixDataTypes.MakeStructSymbolType(template.InstanceId, arrayDims);
@@ -66,7 +68,8 @@ public sealed class TagDatabase : ITagDatabase
             symbolType: symbolType,
             tagType: template.StructureHandle,
             elementSize: (int)template.StructureSize,
-            elementCount: elementCount);
+            elementCount: elementCount,
+            isReadOnly: isReadOnly);
 
         RegisterTag(tag);
         Interlocked.Increment(ref _structureVersion);
