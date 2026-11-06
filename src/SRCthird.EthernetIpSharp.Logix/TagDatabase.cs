@@ -214,7 +214,9 @@ public sealed class TagDatabase : ITagDatabase
                 if (elemSize <= 0) elemSize = 4; // Default for unknown/struct types
 
                 // Alignment based on data type
-                int alignment = GetAlignment(m.DataType, elemSize);
+                int alignment = LogixDataTypes.GetElementSize(m.DataType);
+                if (alignment <= 0)
+                    alignment = Math.Min(elemSize, 4);
                 offset = Align(offset, alignment);
 
                 int memberSize = m.ArraySize > 0 ? elemSize * m.ArraySize : elemSize;
@@ -249,32 +251,6 @@ public sealed class TagDatabase : ITagDatabase
         _templates.TryGetValue(instanceId, out var t) ? t : null;
 
     public IEnumerable<TemplateDefinition> AllTemplates => _templates.Values;
-
-    /// <summary>
-    /// Get the required alignment for a Logix data type.
-    /// SINT/BOOL: 1, INT: 2, DINT/REAL/DWORD: 4, LINT/LREAL: 8.
-    /// </summary>
-    private static int GetAlignment(ushort dataType, int elementSize)
-    {
-        ushort baseType = (ushort)(dataType & 0x00FF);
-        return baseType switch
-        {
-            0xC1 => 1,  // BOOL
-            0xC2 => 1,  // SINT
-            0xC3 => 2,  // INT
-            0xC4 => 4,  // DINT
-            0xC5 => 8,  // LINT
-            0xC6 => 1,  // USINT
-            0xC7 => 2,  // UINT
-            0xC8 => 4,  // UDINT
-            0xC9 => 8,  // ULINT
-            0xCA => 4,  // REAL
-            0xCB => 8,  // LREAL
-            0xD3 => 4,  // DWORD
-            0xD4 => LogixDataTypes.ShortStringStorageSize, // SHORT_STRING
-            _ => Math.Min(elementSize, 4), // Unknown: align to element size, max 4
-        };
-    }
 
     /// <summary>Align offset up to the given boundary.</summary>
     private static int Align(int offset, int alignment) =>
