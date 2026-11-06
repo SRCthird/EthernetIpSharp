@@ -215,7 +215,7 @@ public static class UdtCodeGenerator
         {
             int elemSize = CipDataTypeCast.GetFixedSize((ushort)(m.DataType & 0x00FF));
             if (elemSize <= 0) return;
-            string ctype = GetCSharpAtomicType((ushort)(m.DataType & 0x00FF));
+            string ctype = CipDataTypeCast.GetCSharpString((ushort)(m.DataType & 0x00FF));
             string readCall = GetReadCall(m.DataType, elemSize);
             if (readCall != null)
             {
@@ -246,37 +246,19 @@ public static class UdtCodeGenerator
 
         if (m.IsArray && (m.DataType & 0xE000) == 0x2000)
         {
-            string elemType = GetCSharpAtomicType((ushort)(m.DataType & 0x00FF));
+            string elemType = CipDataTypeCast.GetCSharpString((ushort)(m.DataType & 0x00FF));
             return $"{elemType}[]";
         }
 
         if ((m.DataType & 0x8000) != 0)
             return "byte[]"; // Nested struct as raw bytes
 
-        return GetCSharpAtomicType((ushort)(m.DataType & 0x00FF));
+        return CipDataTypeCast.GetCSharpString((ushort)(m.DataType & 0x00FF));
     }
-
-    private static string GetCSharpAtomicType(ushort baseType) => baseType switch
-    {
-        0xC1 => "bool",
-        0xC2 => "sbyte",
-        0xC3 => "short",
-        0xC4 => "int",
-        0xC5 => "long",
-        0xCA => "float",
-        0xCB => "double",
-        0xD3 => "uint",
-        _ => "int",
-    };
 
     private static string GetTypeDescription(TemplateMemberDetail m)
     {
-        string typeName = (m.DataType & 0x00FF) switch
-        {
-            0xC1 => "BOOL", 0xC2 => "SINT", 0xC3 => "INT", 0xC4 => "DINT",
-            0xC5 => "LINT", 0xCA => "REAL", 0xCB => "LREAL", 0xD3 => "DWORD",
-            _ => $"0x{m.DataType:X4}",
-        };
+        string typeName = CipDataTypeCast.GetCipDataType((ushort)(m.DataType & 0x00FF));
         if (m.IsArray) typeName += $"[{m.ArraySize}]";
         return typeName;
     }

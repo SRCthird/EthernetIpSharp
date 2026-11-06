@@ -7,6 +7,30 @@
             return Enum.GetName(typeof(CipDataType), cipType) ?? $"0x{cipType:X4}";
         }
 
+        public static string GetCSharpString(CipDataType baseType)
+        {
+            return baseType switch
+            {
+                CipDataType.Bool => "bool",
+                CipDataType.Sint => "sbyte",
+                CipDataType.Int => "short",
+                CipDataType.Dint => "int",
+                CipDataType.Lint => "long",
+                CipDataType.Usint => "byte",
+                CipDataType.Uint => "ushort",
+                CipDataType.Udint => "uint",
+                CipDataType.Ulint => "ulong",
+                CipDataType.Real => "float",
+                CipDataType.Lreal => "double",
+                _ => "int",
+            };
+        }
+
+        public static string GetCSharpString(ushort baseType)
+        {
+            return GetCSharpString((CipDataType)baseType);
+        }
+
         public static Type GetCSharpType(CipDataType baseType)
         {
             return baseType switch
